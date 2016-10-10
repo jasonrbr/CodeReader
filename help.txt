@@ -1,0 +1,9 @@
+This is the help menu. If Windows, "Control w" to close. On Mac, "Command w" to close. Here are the commands you can select from.
+
+Main menu.
+Toggle line numbers on slash off.
+Jump to a function definition.
+Use the up and down arrow keys to begin reading the function.
+
+End of the help document.
+If Windows, "Control w" to close. On Mac, "Command w" to close. 

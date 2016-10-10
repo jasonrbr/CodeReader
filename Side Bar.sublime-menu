@@ -1,0 +1,13 @@
+[
+{
+	"id" : "plugin_test",
+	"caption": "plugin_test",
+	"children":
+	[
+	{
+		"caption" : "run",
+		"command" : "plugin_test"
+	}
+	]
+}
+]

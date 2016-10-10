@@ -1,0 +1,8 @@
+[
+	{ 
+		"keys": ["super+shift+c"],
+		"command": "example"},
+	{
+		"keys": ["super+shift+h"], "command": "open_file", 
+  		"args": {"file": "/Users/alexandrabrown/Library/Application Support/Sublime Text 3/Packages/help.txt"} },
+]
