@@ -1,0 +1,4 @@
+[
+  { "keys": ["ctrl+shift+l"], "command": "toggle_line_number" },
+  { "keys": ["ctrl+shift+q"], "command": "example"}
+]
