@@ -1,23 +1,8 @@
 import sublime_plugin, sublime
 
-class Scope():
-	def __init__(self, name_in, return_type_in, parent_in=None, \
-				 children_in=list(), variables_in=list(), extras_in=list()):
-		#self.name = name_in
-		self.return_type = return_type_in
-		#self.parent = parent_in
-		self.children = children_in
-		self.variables = variables_in
-		self.extras = extras_in
-
-	#def __str__(self):
-		# return ' '.join([self.return_type, self.name, "variables({})".format(str(len(self.variables))), "children({})".format(str(self.children)), 'extras({})'.format(len(self.extras))])
-	#	return ' '.join([self.return_type, self.name])
-
 # TODO: assumes each line contains a single ';'
 # TODO: arguments
-# TODO: get rid of hierarchy? :/
-class Function(Scope):
+class Function():
 	# Assumes function_region stores a valid function 
  	# 	declaration/definition.
 	# params:
@@ -25,7 +10,7 @@ class Function(Scope):
 	#		declaration/definition
 	#
 	#	view_: sublime view that contains the function region 
-	def __init__(self, function_region_, view_):
+	def __init__(self, view_, function_region_):
 		self.function_region=function_region_
 		self.view=view_
 
@@ -34,19 +19,21 @@ class Function(Scope):
 	def _get_literal_declaration(self):
 		declaration = self.view.line(
 			self.view.find('{', self.function_region.begin()))
+
 		return self.view.substr(declaration).split('{')[0] + '{'
 
 	# returns string containing this Function's return type
 	def _get_return_type(self,declaration):
-		return self._get_literal_declaration().split()[0]
+		return declaration.split()[0]
 
 	# returns string containing this Function's name
 	def _get_name(self, declaration):
-		name = self._get_literal_declaration().split()[1]
+		name = declaration.split()[1]
 		return name.split('(')[0]
+	
+	def get_name(self):
+		return self._get_name(self._get_literal_declaration())
 
-	# returns string describing this Function's declaration
-	# in layman's terms
 	def get_declaration(self):
 		declaration = self._get_literal_declaration()
 		return "function {} returns {}".format(
@@ -82,6 +69,6 @@ class Function(Scope):
 # Testing
 class ScopeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		func = Function(sublime.Region(42, 95), self.view)
+		func = Function(self.view, sublime.Region(42, 95))
 		func_str = func.get_declaration()
 		func.output()
