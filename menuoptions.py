@@ -1,11 +1,8 @@
-# parse cpp file and make a 'dom'-line tree
-
 import sublime
 import sublime_plugin
 import re
 from collections import deque
-# function, class level scopes
-# not loops
+from .scope import Function
 
 # TODO only works for built in types
 type_patt = re.compile('(string|int|double|bool)') #TODO remove
@@ -16,118 +13,82 @@ function_patt = re.compile(var_types+r'\s([\w]+)\((.*)\)')
 class_patt = re.compile(r'(class|struct)\s([\w]+)\s?\{')
 function_end_patt = re.compile(r'\}')
 
-class Scope():
-	def __init__(self, name_in, return_type_in, parent_in=None, \
-				 children_in=list(), variables_in=list(), extras_in=list()):
-		self.name = name_in
-		self.return_type = return_type_in
-		self.parent = parent_in
-		self.children = children_in
-		self.variables = variables_in
-		self.extras = extras_in
+class Hierarchy:
+	def _get_child_region(self, child_start_point, end_search_point):
+		regions = self._view.split_by_newlines(
+			sublime.Region(child_start_point, end_search_point))
 
-	def __str__(self):
-		# return ' '.join([self.return_type, self.name, "variables({})".format(str(len(self.variables))), "children({})".format(str(self.children)), 'extras({})'.format(len(self.extras))])
-		return ' '.join([self.return_type, self.name])
+		open_bracket_count = 0
+		close_bracket_count = 0
 
-	# Returns region of child, returns None
-	# if child doesn't exist yo
-	#def get_child()
+		end_point = child_start_point
+		for region in regions:
+			region_str = self._view.substr(region)
 
-""" return root node to the hierarchy
- 	assumes only 1 bracket per line at the moment
- 	assumes you put open bracket on the same line as function declaration
- 	file is list of strings of content of file """
-def GetHierarchy(view, region, name, return_type=None):
-	# TODO: don't pass in name or return type? :/
-	scope = Scope(name_in=name, return_type_in=return_type)
+			if '{' in region_str:
+				open_bracket_count += region_str.count('{')
+			if '}' in region_str:
+				close_bracket_count += region_str.count('}')
+			
+			end_point = region.end();
 
-	idx = region.begin()
-	while True:
-		child_declaration = view.find(var_types+r'\s([\w]+)\((.*)\)', idx)
-		if not child_declaration:
-			break
-		print(child_declaration)
-		idx = child_declaration.end() + 1
-		print(idx)
+			if open_bracket_count == close_bracket_count:
+				break
 
-	"""#count = 0
-	for idx in range(0, len(content)):
-		line = content[idx]
-		if function_patt.match(line):
-			#count += 1
-			return_type = function_patt.match(line).group(1)
-			name = function_patt.match(line).group(2)
-			child, idx = GetFunctionDefinition(name, return_type, content[idx+1:])
+		region = sublime.Region(child_start_point, end_point)
 
-			scope.children.append(child)
-		elif variable_patt.match(line):
-			v = Variable(getType(line), getName(line), getValue(line))
-			scope.variables.append(v)
+		if open_bracket_count == close_bracket_count:
+			return sublime.Region(child_start_point, end_point)
+		# Scope never ends
 		else:
-			scope.extras += line
-			#print(line)
+			return None
 
+	def __init__(self, view, name, region, parent=None):
+		self._view = view
+		self._name = name
+		self._parent = parent
+		# TODO: list of regions or Scope objects?
+		self._children = {
+			'other' : list(),
+			'classes' : list(),
+			'functions' : list()}
 
-	# TODO test end line num?
-	return scope, count"""
+		idx = region.begin()
+		while True:
+			child_declaration = view.find(
+				var_types+r'\s([\w]+)\((.*)\)', idx)
 
-class Variable():
-	def __init__(self, type_in, name_in, value_in):
-		self.type = type_in
-		self.name = name_in
-		self.value = value_in
+			if not child_declaration:
+				break
 
-# returns matched type; returns none if not found
-def getType(line):
-	return variable_patt.match(line).group(1)
+			child_region = self._get_child_region(
+				child_declaration.end() + 1, region.end())
 
-def getName(line):
-	return variable_patt.match(line).group(2)
+			if child_region:
+				#TODO check if function?
+				self._children['functions'].append(child_region)
+				idx = child_region.end() + 1
+			else:
+				# Needs more descriptive error message
+				print("No end bracket found")
+				return None
 
-def getValue(line):
-	return variable_patt.match(line).group(3)
+	def output(self):
+		print('Scope: {}'.format(self._name))
+		
+		for key, val in self._children.items():
+			print("    {}:".format(key))
+			for region in val:
+				func = Function(self._view, region)
+				print("        {}".format(func.get_name()))
 
-# content is list of string, starting with first line of declaration
-# returns Scope containing the content, and next_idx if function ends
-def GetFunctionDefinition(name, return_type, content):
+	@property
+	def parent(self):
+		return self._parent
 
-	func_scope = Scope(name_in=name, return_type_in=return_type)
-"""
-	#print('defining func', name)
-	for idx in range(0, len(content)):
-		line = content[idx]
-		if function_patt.match(line):
-			return_type = function_patt.match(line).group(1)
-			name = function_patt.match(line).group(2)
-			child, idx = GetFunctionDefinition(content[idx+1:])
-
-			func_scope.children.append(child)
-		elif variable_patt.match(line):
-			v = Variable(getType(line), getName(line), getValue(line))
-			func_scope.variables.append(v)
-		elif function_end_patt.match(line):
-			return func_scope, idx+1
-		else:
-			func_scope.extras += line
-			#print('skipped', line)
-
-
-	#print("Function never ended. Terminating.")
-	exit(1)"""
-
-"""def printHierarchy(head):
-	print("Hello World")
-	#q = deque()
-	#q.appendleft(head)
-
-	#i = 0
-	#while i < 100:
-	#	print(i)
-	#	cur_node = q.pop()
-		# print(str(cur_node))
-	#	for child in cur_node.children:
-	#		q.appendleft(child)"""
+	@property
+	def children(self):
+		return self._children
 
 # TODO: only works for single file
 class MenuOptionsCommand(sublime_plugin.TextCommand):
@@ -137,7 +98,9 @@ class MenuOptionsCommand(sublime_plugin.TextCommand):
 
 		#src_code = self.view.split_by_newlines(sublime.Region(file_start, file_end))
 		src_code = sublime.Region(file_start, file_end)
-		head = GetHierarchy(view=self.view, region=src_code, name="Global")
+		head = Hierarchy(view=self.view, name='Global', region=src_code)
+		if head:
+			head.output()
 		# head, end_idx = GetHierarchy(txt.split('\n'))
 		# if end_idx != self.view.size():
 		# 	print('end_idx={}, size={}'.format(end_idx, self.view.size()))
