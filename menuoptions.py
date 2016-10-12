@@ -10,6 +10,7 @@ from collections import deque
 # TODO only works for built in types
 type_patt = re.compile('(string|int|double|bool)') #TODO remove
 var_types = r'(string|int|double|bool|void)'
+# TODO how to include open bracket?
 variable_patt = re.compile(var_types+r'\s([\w]+)\s?\=?\s?([\w]+)?;')
 function_patt = re.compile(var_types+r'\s([\w]+)\((.*)\)')
 class_patt = re.compile(r'(class|struct)\s([\w]+)\s?\{')
@@ -42,17 +43,13 @@ def GetHierarchy(view, region, name, return_type=None):
 	scope = Scope(name_in=name, return_type_in=return_type)
 
 	idx = region.begin()
-	#while idx < view.size():
-	# TODO: make work for classes, girl
-	child_declaration = view.find(var_types+r'\s([\w]+)\((.*)\)', idx)
-	print(child_declaration)
-	idx = child_declaration.end() + 1
-	print(idx)
-
-	child_declaration = view.find(var_types+r'\s([\w]+)\((.*)\)', idx)
-	print(child_declaration)
-	idx = child_declaration.end() + 1
-	print(idx)
+	while True:
+		child_declaration = view.find(var_types+r'\s([\w]+)\((.*)\)', idx)
+		if not child_declaration:
+			break
+		print(child_declaration)
+		idx = child_declaration.end() + 1
+		print(idx)
 
 	"""#count = 0
 	for idx in range(0, len(content)):
