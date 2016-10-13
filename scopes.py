@@ -1,14 +1,11 @@
 import sublime_plugin, sublime
 
-# TODO: assumes each line contains a single ';'
-# TODO: arguments
-class Function():
-	def __init__(self, view, region, declaration):
+class Scope():
+	def __init__(self, view, region, name):
 		self._view = view
 		self._region = region
-		self._returns = declaration.split()[0]
-		self._name = declaration.split()[1].split('(')[0]
-
+		self._name = name
+	
 	@property
 	def region(self):
 		return self._region
@@ -16,6 +13,15 @@ class Function():
 	@property
 	def name(self):
 		return self._name
+
+# TODO: assumes each line contains a single ';'
+# TODO: arguments
+class Function(Scope):
+	def __init__(self, view, region, declaration):
+		super().__init__(view, region, 
+			  declaration.split()[1].split('(')[0])
+
+		self._returns = declaration.split()[0]
 
 	@property
 	def declaration(self):
@@ -43,6 +49,20 @@ class Function():
 				func_str += line_str.lstrip() + '\n'
 
 		return func_str
+
+# TODO: assumes each line contains a single ';'
+# TODO: arguments
+class Class(Scope):
+	def __init__(self, view, region, declaration):
+		super().__init__(view, region, declaration.split()[1])
+
+	@property
+	def declaration(self):
+		return 'class {}'.format(self._name)
+
+	# TODO
+	def __str__(self):
+		return self.declaration
 
 # Testing
 class ScopeCommand(sublime_plugin.TextCommand):
