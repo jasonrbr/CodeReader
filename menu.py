@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 from .function import Function
 
+# TODO: use pypeg
 class MenuNode():
 	def _get_child(self, start_region):
 		# Get declaration
