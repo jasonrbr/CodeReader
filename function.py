@@ -6,18 +6,20 @@ class Function():
 	def __init__(self, view, region, declaration):
 		self._view = view
 		self._region = region
-		self._declaration = declaration
+		self._returns = declaration.split()[0]
+		self._name = declaration.split()[1].split('(')[0]
 
 	@property
 	def region(self):
 		return self._region
 
 	@property
-	def declaration(self):
-		returns = self._declaration.split()[0]
-		name = self._declaration.split()[1].split('(')[0]
+	def name(self):
+		return self._name
 
-		return "function {} returns {}".format(name, returns)
+	@property
+	def declaration(self):
+		return "function {} returns {}".format(self._name, self._returns)
 
 	def __str__(self):
 		func_str = self.declaration + '\n'
@@ -45,6 +47,5 @@ class Function():
 # Testing
 class ScopeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-
 		func = Function(self.view, sublime.Region(42, 95), "int main() {")
 		print(str(func))
