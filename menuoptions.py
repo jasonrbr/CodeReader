@@ -3,6 +3,7 @@ import sublime_plugin
 import re
 from collections import deque
 from .scope import Function
+from .menu import MenuOptions
 
 # TODO only works for built in types
 type_patt = re.compile('(string|int|double|bool)') #TODO remove
@@ -48,30 +49,36 @@ class Hierarchy:
 		self._name = name
 		self._parent = parent
 		# TODO: list of regions or Scope objects?
+		# TODO: rename 'others'
 		self._children = {
-			'other' : list(),
+			'others' : list(),
 			'classes' : list(),
 			'functions' : list()}
 
-		idx = region.begin()
+		idx = 0
 		while True:
 			child_declaration = view.find(
 				var_types+r'\s([\w]+)\((.*)\)', idx)
 
 			if not child_declaration:
-				break
+				return
 
 			child_region = self._get_child_region(
 				child_declaration.end() + 1, region.end())
 
-			if child_region:
-				#TODO check if function?
-				self._children['functions'].append(child_region)
-				idx = child_region.end() + 1
-			else:
-				# Needs more descriptive error message
+			if not child_region:
+				# TODO: needs more descriptive error message
 				print("No end bracket found")
 				return None
+
+			func = Function(self._view, child_region)
+			func_dict = {func.name : func.region}
+			#print(func_dict)
+			#TODO check if function?
+
+			self._children['functions'].append(func_dict)
+
+			idx = func.region.end() + 1
 
 	def output(self):
 		print('Scope: {}'.format(self._name))
@@ -83,30 +90,44 @@ class Hierarchy:
 				print("        {}".format(func.get_name()))
 
 	@property
-	def parent(self):
-		return self._parent
+	def functions(self):
+		return self._children['functions']
 
 	@property
-	def children(self):
-		return self._children
+	def classes(self):
+		return self._children['classes']
+
+	# Todo: rename
+	@property
+	def others(self):
+		return self._children['others']
+	
 
 # TODO: only works for single file
-class MenuOptionsCommand(sublime_plugin.TextCommand):
+class MenuOptionsCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
 	def run(self, edit):
 		file_start = 0
 		file_end = self.view.size()
 
+		menu = MenuOptions(sublime.active_window())
+
 		#src_code = self.view.split_by_newlines(sublime.Region(file_start, file_end))
 		src_code = sublime.Region(file_start, file_end)
 		head = Hierarchy(view=self.view, name='Global', region=src_code)
-		if head:
-			head.output()
-		# head, end_idx = GetHierarchy(txt.split('\n'))
-		# if end_idx != self.view.size():
-		# 	print('end_idx={}, size={}'.format(end_idx, self.view.size()))
-		# printHierarchy(head)
-		#printHierarchy(head)
-		#print ("Count: {}".format(num_scopes_found))
-		#print('done')
-		# return head
 
+		keys = list()
+		for idx in range(0, len(head.functions)):
+			for key in head.functions[idx]:
+				keys.append(key)
+
+		menu.display_menu(keys)
+
+		"""while True:
+			cmd = self.window.show_input_panel("Selection:", "", self.on_done, None, None)
+			if not cmd:
+				return
+			# handle non-functions
+			if cmd is 'function':
+				print(head.functions)
+			else:
+				print('{} inputted'.format(cmd))"""

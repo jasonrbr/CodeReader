@@ -31,14 +31,21 @@ class Function():
 		name = declaration.split()[1]
 		return name.split('(')[0]
 	
-	def get_name(self):
-		return self._get_name(self._get_literal_declaration())
-
+	# TODO: make property
 	def get_declaration(self):
 		declaration = self._get_literal_declaration()
 		return "function {} returns {}".format(
 			self._get_name(declaration),
 			self._get_return_type(declaration))
+
+	@property
+	def name(self):
+		return self._get_name(self._get_literal_declaration())
+	
+
+	@property
+	def region(self):
+		return self.function_region
 
 	# output the declaration and each line in the function
 	#	without leading whitespace
