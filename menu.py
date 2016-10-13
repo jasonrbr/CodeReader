@@ -1,7 +1,6 @@
 import sublime
 import sublime_plugin
-from .function import Function
-
+from .scopes import Function, Class
 # TODO: use pypeg
 class MenuNode():
 	def _get_child(self, start_region):
@@ -41,7 +40,11 @@ class MenuNode():
 		# Seprate classes and structs?
 		if "class" in declaration_str or "struct" in declaration_str:
 			# TODO: class object
-			return None, 'classes'
+			cl = Class(self._view,
+						  child_region,
+						  declaration_str)
+
+			return cl, 'classes'
 		else:
 			func = Function(self._view, 
 							child_region,
