@@ -2,6 +2,8 @@ import sublime
 import sublime_plugin
 from .scopes import Function, Class
 # TODO: use pypeg
+
+
 class MenuNode():
 	def _get_child(self, start_region):
 		# Get declaration
@@ -54,6 +56,7 @@ class MenuNode():
 
 	# TODO: use pypeg
 	# TODO: only works when '{' on same line
+	# TODO: list of pairs instead of list of dicts
 	def _generate_children(self):
 		# TODO: rename 'others'
 		self._children = {
@@ -77,7 +80,7 @@ class MenuNode():
 			if not child:
 				return
 
-			self._children[child_type].append({child.name : child})	
+			self._children[child_type].append(child)	
 
 			idx = child.region.end() + 1
 
@@ -106,11 +109,11 @@ class MenuNode():
 			return self._children[key]
 
 		if not key:
-			keys = list()
+			children = list()
 			for key, value in self._children.items():
 				if len(value):
-					keys.append(key)
-			return keys
+					children.append(key)
+			return children
 		
 		return None
 
