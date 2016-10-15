@@ -1,14 +1,23 @@
 import sublime_plugin, sublime
 
+func_type = 'function'
+class_type = 'class'
+other_type = 'other'
+
 class Scope():
-	def __init__(self, view, region, name):
+	def __init__(self, view, body, name, s_type=None):
 		self._view = view
-		self._region = region
+		self._type = s_type
+		self._body = body
 		self._name = name
 	
 	@property
-	def region(self):
-		return self._region
+	def type(self):
+		return self._type
+	
+	@property
+	def body(self):
+		return self._body
 
 	@property
 	def name(self):
@@ -17,9 +26,10 @@ class Scope():
 # TODO: assumes each line contains a single ';'
 # TODO: arguments
 class Function(Scope):
-	def __init__(self, view, region, declaration):
-		super().__init__(view, region, 
-			  declaration.split()[1].split('(')[0])
+	def __init__(self, view, body, declaration):
+		super().__init__(view, body,
+			  declaration.split()[1].split('(')[0],
+			  func_type)
 
 		self._returns = declaration.split()[0]
 
@@ -30,13 +40,9 @@ class Function(Scope):
 	def __str__(self):
 		func_str = self.declaration + '\n'
 
-		# Get region immediately after declaration
-		row = self._view.rowcol(self._region.begin())[0] + 1
-		definition_start = self._view.text_point(row, 0)
-
 		# TODO: split by ';'
 		definition = self._view.split_by_newlines(
-			sublime.Region(definition_start, self._region.end()))
+			sublime.Region(self._body.begin(), self._body.end()))
 
 		# Iterate all lines of code in the function
 		for line in definition:
@@ -53,8 +59,9 @@ class Function(Scope):
 # TODO: assumes each line contains a single ';'
 # TODO: arguments
 class Class(Scope):
-	def __init__(self, view, region, declaration):
-		super().__init__(view, region, declaration.split()[1])
+	def __init__(self, view, body, declaration):
+		super().__init__(view, body, 
+			declaration.split()[1], class_type)
 
 	@property
 	def declaration(self):
@@ -67,5 +74,5 @@ class Class(Scope):
 # Testing
 class ScopeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		func = Function(self.view, sublime.Region(42, 95), "int main() {")
+		func = Function(self.view, sublime.Region(82, 122), "int main() {")
 		print(str(func))
