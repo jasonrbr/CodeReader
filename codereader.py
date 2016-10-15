@@ -17,7 +17,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		file_end = self.view.size()
 		src_code = sublime.Region(file_start, file_end)
 
-		self._node = MenuNode(view=self.view, name=global_namespace, region=src_code)
+		self._node = MenuNode(view=self.view, name=global_namespace, body=src_code)
 		self._show_options_menu()
 
 	# TODO: Prob should refactor this X(
@@ -73,10 +73,11 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			return
 
 		scope = self._options[ind]
-		
-		# Set current node to the selected child
-		# TODO infinite loop
-		self._node = MenuNode(view=self.view, name=scope.name, 
-			region=scope.region, parent = self._node.region)
+		print(scope.region)
 
-		#self._show_options_menu()
+		# Set current node to the selected child
+		self._node = MenuNode(view=self.view, 
+							  scope=scope, 
+							  parent=self._node._scope)
+
+		self._show_options_menu()
