@@ -25,6 +25,11 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
 		self._show_options_menu()
 
+
+	def _show_panel(self, options, on_done):
+		sublime.active_window().show_quick_panel(options, on_done)
+
+
 	# TODO: Prob should refactor this X(
 	def _show_children_menu(self, child):
 		self._options = tuple()
@@ -38,8 +43,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		# TODO: add read option if class or func
 		if not children:
 			# TODO: perhaps print on highlight
-			sublime.active_window().show_quick_panel(
-				self._options, self._on_children_done)
+			self._show_panel(self._options, self._on_children_done)
 			return
 
 		panel_options = list()
@@ -51,9 +55,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
 		assert(len(panel_options) == len(self._options))
 
-		# TODO: perhaps print on hilight
-		sublime.active_window().show_quick_panel(
-			panel_options, self._on_children_done)
+		self._show_panel(panel_options, self._on_children_done)
 
 	def _show_options_menu(self):
 		self._options = list()
@@ -64,7 +66,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			self._options.append(go_up)
 
 		children = self._node.get_children()
-		# TODO: what if function or P.O.D class
+
 		if children:
 			self._options += self._node.get_children()
 
@@ -72,9 +74,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			self._node.scope.type == class_type:
 				self._options.append(read + self._node.name)
 
-		# TODO: perhaps print on hilight
-		sublime.active_window().show_quick_panel(
-			self._options, self._on_options_done)
+		self._show_panel(self._options, self._on_options_done)
 
 	def _on_options_done(self, ind):
 		if(ind == -1):
@@ -93,9 +93,10 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			return
 
 		if (read + self._node.scope.name) in selection:
+			print(self._node.scope)
 			self._show_options_menu()
-		
-		self._show_children_menu(selection)
+		else:
+			self._show_children_menu(selection)
 
 	def _on_children_done(self, ind):
 		if(ind == -1):
