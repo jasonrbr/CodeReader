@@ -1,5 +1,6 @@
 import sublime_plugin, sublime
 
+# Scope types
 func_type = 'function'
 class_type = 'class'
 other_type = 'other'
@@ -24,7 +25,7 @@ class Scope():
 		return self._name
 
 # TODO: assumes each line contains a single ';'
-# TODO: arguments
+# TODO: store arguments
 class Function(Scope):
 	def __init__(self, view, body, declaration):
 		super().__init__(view, body,
@@ -57,7 +58,6 @@ class Function(Scope):
 		return func_str
 
 # TODO: assumes each line contains a single ';'
-# TODO: arguments
 class Class(Scope):
 	def __init__(self, view, body, declaration):
 		super().__init__(view, body, 
@@ -87,7 +87,7 @@ class Class(Scope):
 
 		return class_str
 
-# Testing
+# Test
 class ScopeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		func = Function(self.view, sublime.Region(82, 122), "int main() {")
