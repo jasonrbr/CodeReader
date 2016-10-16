@@ -67,9 +67,25 @@ class Class(Scope):
 	def declaration(self):
 		return 'class {}'.format(self._name)
 
-	# TODO
+	# TODO: make funcs print pretty
 	def __str__(self):
-		return self.declaration
+		class_str = self.declaration + '\n'
+
+		# TODO: split by ';'
+		definition = self._view.split_by_newlines(
+			sublime.Region(self._body.begin(), self._body.end()))
+
+		# Iterate all lines of code in the function
+		for line in definition:
+			line_str = self._view.substr(line)
+
+			# TODO: just skip?
+			if line_str.isspace() or not line_str:
+				class_str += 'empty line\n'
+			else:
+				class_str += line_str.lstrip() + '\n'
+
+		return class_str
 
 # Testing
 class ScopeCommand(sublime_plugin.TextCommand):
