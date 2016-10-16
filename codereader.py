@@ -10,6 +10,8 @@ exit_program = 'exit'
 # Rename (goes up one level in the tree)
 go_up = 'go up'
 
+read = 'read '
+
 # TODO: only works for single file
 # TODO: permanently store global scope?
 class CodeReaderCommand(sublime_plugin.TextCommand):
@@ -35,7 +37,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
 		# TODO: add read option if class or func
 		if not children:
-			# TODO: perhaps print on hilight
+			# TODO: perhaps print on highlight
 			sublime.active_window().show_quick_panel(
 				self._options, self._on_children_done)
 			return
@@ -66,6 +68,10 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		if children:
 			self._options += self._node.get_children()
 
+		if self._node.scope.type == func_type or \
+			self._node.scope.type == class_type:
+				self._options.append(read + self._node.name)
+
 		# TODO: perhaps print on hilight
 		sublime.active_window().show_quick_panel(
 			self._options, self._on_options_done)
@@ -74,6 +80,8 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		if(ind == -1):
 			return
 
+		# TODO, index out of bounds when asked to read
+		# for some reason...
 		selection = self._options[ind]
 
 		if selection == exit_program:
@@ -83,6 +91,9 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			self._node = self._node.parent
 			self._show_options_menu()
 			return
+
+		if (read + self._node.scope.name) in selection:
+			self._show_options_menu()
 		
 		self._show_children_menu(selection)
 
