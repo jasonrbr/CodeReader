@@ -5,6 +5,7 @@ func_type = 'function'
 class_type = 'class'
 other_type = 'other'
 
+# TODO: store "is member of" ?
 class Scope():
 	def __init__(self, view, body, name, s_type=None):
 		self._view = view
