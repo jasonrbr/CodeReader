@@ -39,6 +39,10 @@ class MenuNode():
 	def parent(self):
 		return self._parent
 
+	@property
+	def scope(self):
+		return self._scope
+	
 	# TODO: use pypeg
 	# TODO: only works when '{' on same line
 	# TODO: list of pairs instead of list of dicts
