@@ -8,14 +8,10 @@ from .scopes import *
 global_namespace = 'global namespace'
 
 # Menu option Strings:
-exit_program = 'exit' # TODO: get rid of exit?
+exit_program = 'exit'
 go_up = 'go up'
 read = 'read ' # Concat with scope name
 
-# TODO: only works for single file
-# TODO: permanently store global scope?
-# TODO: output on hilight for panels?
-# TODO: give panel a title
 class CodeReaderCommand(sublime_plugin.TextCommand):
 	def run(self, edit):		
 		file_start = 0
@@ -42,7 +38,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		# Options is a tuple because it must store a string
 		# and Scope() objects
 		self._options = tuple()
-		self._options += (go_up,) # TODO: perhaps store parent?
+		self._options += (go_up,)
 
 		children = self._node.get_children(child_type)
 
