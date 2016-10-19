@@ -4,11 +4,11 @@ _Madeline Andrew, Alexandra Brown, Jason Brown, Benny Ng_
 
 This Sublime Text 3 extension works by giving context-rich readings and organization of code. It breaks code into different hierarchies (functions, classes, etc) and offers the user a concise and easy-to-navigate user interface for understanding these scopes.
 
-Requirements: Python 3, Sublime Text 3
+**Requirements**: Python 3, Sublime Text 3
 
-To install, pull this folder along the path:
+**To install**, pull this folder along the path:
 
-Windows: c:\users\<username>\AppData\Roaming\Sublime Text 3\Packages
+Windows: c:\users\<username>\AppData\Roaming\Sublime Text 3\Packages\
 
 Mac: /Users/{username}/Library/Application Support/Sublime Text 3/Packages/
 
