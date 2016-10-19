@@ -1,7 +1,7 @@
-This is the help menu. If on Windows, use the key binding "Control w" to close. If on Mac, key binding "Command w" to close.
+This is the help text.
 Use the arrow keys to cycle through the available functions or classes.
 Press enter to make a selection.
-Command: _____ Toggle line numbers on slash off.
-Use the arrow keys to read through a function
+Command: _____ 
+Toggle line numbers on or off.
+Use the arrow keys to read through a function.
 End of the help document.
-If on Windows, use the key binding "Control w" to close. If on Mac, key binding "Command w" to close.
