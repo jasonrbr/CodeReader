@@ -124,3 +124,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 							  parent=copy.deepcopy(self._node))
 
 		self._show_options_menu()
+
+class HelpCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		self.view.insert(edit, 0, "Hello, World!")
