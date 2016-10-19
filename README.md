@@ -13,3 +13,5 @@ Windows: c:\users\<username>\AppData\Roaming\Sublime Text 3\Packages
 Mac: /Users/{username}/Library/Application Support/Sublime Text 3/Packages/
 
 For the alpha release, we have implemented the main menu for navigation. To run this plugin, open _test_alpha.cpp_ and run in the sublime console _view.run_command('code_reader')_. This menu will present available functions and classes to navigate to and read. It supports "going up" a hierarchy level as well. Currently, these functions will be printed to the console. It will be simple in the beta release to convert this text to speech.
+
+Additionally, we have other branches that have "proof of concepts" for our remaining features to implement. These include printing line numbers, text to speech libraries, printing comments, a help menu, and more research with printing class/function information.
