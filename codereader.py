@@ -28,8 +28,9 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 	# Displays a sublime panel
 	#	@param: options: list of strings for selection
 	#	@param: on_done: callback function
-	def _show_panel(self, options, on_done):
-		sublime.active_window().show_quick_panel(options, on_done)
+	#	@param: on_highlighted: callback function
+	def _show_panel(self, options, on_done, on_highlight):
+		sublime.active_window().show_quick_panel(options, on_done, on_highlight=on_highlight)
 
 	# Displays a panel containing the current node's
 	# children of the specified type.
@@ -44,7 +45,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		children = self._node.get_children(child_type)
 
 		if not children:
-			self._show_panel(self._options, self._on_children_done)
+			self._show_panel(self._options, self._on_children_done, self._on_highlight_done)
 			return
 
 		panel_options = list()
@@ -56,7 +57,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
 		assert(len(panel_options) == len(self._options))
 
-		self._show_panel(panel_options, self._on_children_done)
+		self._show_panel(panel_options, self._on_children_done, self._on_highlight_done)
 
 	# Displays a panel containing the current node's
 	# available children types. Types include func_type,
@@ -79,7 +80,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			self._node.scope.type == class_type:
 				self._options.append(read + self._node.name)
 
-		self._show_panel(self._options, self._on_options_done)
+		self._show_panel(self._options, self._on_options_done, self._on_highlight_done)
 
 	def _on_options_done(self, ind):
 		# show_quick_panel() calls its callback with -1
@@ -121,3 +122,10 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 							  parent=copy.deepcopy(self._node))
 
 		self._show_options_menu()
+
+	def _on_highlight_done(self, ind):
+		#say menu options when option is highlighted
+		#TODO: only read the body of the function when "read ___" is selected, not highlighted
+		say(str(self._options[ind]))
+
+
