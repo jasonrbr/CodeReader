@@ -3,6 +3,7 @@ import sublime_plugin
 import copy
 from .menu import MenuNode	
 from .scopes import *
+from .audio import say
 
 # Name of global Scope
 global_namespace = 'global namespace'
@@ -99,7 +100,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		# When the user reads a scope, neither the current
 		# node nor the displayed menu should change
 		if (read + self._node.scope.name) in selection:
-			print(self._node.scope)
+			say(str(self._node.scope))
 			self._show_options_menu()
 		else:
 			self._show_children_menu(selection)
@@ -120,7 +121,3 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 							  parent=copy.deepcopy(self._node))
 
 		self._show_options_menu()
-
-class HelpCommand(sublime_plugin.TextCommand):
-	def run(self, edit):
-		self.view.insert(edit, 0, "Hello, World!")
