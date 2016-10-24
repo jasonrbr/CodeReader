@@ -5,7 +5,6 @@ func_type = 'function'
 class_type = 'class'
 other_type = 'other'
 
-# TODO: store "is member of" ?
 class Scope():
 	def __init__(self, view, body, name, s_type=None):
 		self._view = view
@@ -25,8 +24,6 @@ class Scope():
 	def name(self):
 		return self._name
 
-# TODO: assumes each line contains a single ';'
-# TODO: store arguments
 class Function(Scope):
 	def __init__(self, view, body, declaration):
 		super().__init__(view, body,
@@ -42,7 +39,6 @@ class Function(Scope):
 	def __str__(self):
 		func_str = self.declaration + '\n'
 
-		# TODO: split by ';'
 		definition = self._view.split_by_newlines(
 			sublime.Region(self._body.begin(), self._body.end()))
 
@@ -50,7 +46,6 @@ class Function(Scope):
 		for line in definition:
 			line_str = self._view.substr(line)
 
-			# TODO: just skip?
 			if line_str.isspace() or not line_str:
 				func_str += 'empty line\n'
 			else:
@@ -58,7 +53,6 @@ class Function(Scope):
 
 		return func_str
 
-# TODO: assumes each line contains a single ';'
 class Class(Scope):
 	def __init__(self, view, body, declaration):
 		super().__init__(view, body, 
@@ -68,11 +62,9 @@ class Class(Scope):
 	def declaration(self):
 		return 'class {}'.format(self._name)
 
-	# TODO: make funcs print pretty
 	def __str__(self):
 		class_str = self.declaration + '\n'
 
-		# TODO: split by ';'
 		definition = self._view.split_by_newlines(
 			sublime.Region(self._body.begin(), self._body.end()))
 
@@ -80,7 +72,6 @@ class Class(Scope):
 		for line in definition:
 			line_str = self._view.substr(line)
 
-			# TODO: just skip?
 			if line_str.isspace() or not line_str:
 				class_str += 'empty line\n'
 			else:

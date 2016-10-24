@@ -2,7 +2,6 @@ import sublime
 import sublime_plugin
 from .scopes import *
 
-# TODO: use pypeg
 class MenuNode():
 	def __init__(self, view, scope, parent=None):
 		self._view = view
@@ -52,9 +51,6 @@ class MenuNode():
 	def scope(self):
 		return self._scope
 	
-	# TODO: use pypeg
-	# TODO: only works when '{' on same line as declaration
-	#
 	# Stores all children found within the body of this
 	# MenuNode's scope
 	def _generate_children(self):
@@ -74,7 +70,6 @@ class MenuNode():
 			child = self._get_child(start_region)	
 
 			# A child is missing a closing bracket
-			# TODO: error message?
 			if not child:
 				return
 
@@ -98,13 +93,11 @@ class MenuNode():
 		if not body:
 			return None
 
-		# TODO: other :p
 		if 'class' in declaration or 'struct' in declaration:
 			return Class(self._view, body, declaration)
 		else:
 			return Function(self._view, body, declaration)
 
-	# TODO: use pypeg
 	# NOTE: Assumes all lines contain and end with a single ';'
 	#
 	# Finds and returns the Region containing the child's definition (body)

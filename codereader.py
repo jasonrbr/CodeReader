@@ -3,19 +3,16 @@ import sublime_plugin
 import copy
 from .menu import MenuNode	
 from .scopes import *
+from .audio import say
 
 # Name of global Scope
 global_namespace = 'global namespace'
 
 # Menu option Strings:
-exit_program = 'exit' # TODO: get rid of exit?
+exit_program = 'exit'
 go_up = 'go up'
 read = 'read ' # Concat with scope name
 
-# TODO: only works for single file
-# TODO: permanently store global scope?
-# TODO: output on hilight for panels?
-# TODO: give panel a title
 class CodeReaderCommand(sublime_plugin.TextCommand):
 	def run(self, edit):		
 		file_start = 0
@@ -31,8 +28,9 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 	# Displays a sublime panel
 	#	@param: options: list of strings for selection
 	#	@param: on_done: callback function
-	def _show_panel(self, options, on_done):
-		sublime.active_window().show_quick_panel(options, on_done)
+	#	@param: on_highlighted: callback function
+	def _show_panel(self, options, on_done, on_highlight):
+		sublime.active_window().show_quick_panel(options, on_done, on_highlight=on_highlight)
 
 	# Displays a panel containing the current node's
 	# children of the specified type.
@@ -42,12 +40,12 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		# Options is a tuple because it must store a string
 		# and Scope() objects
 		self._options = tuple()
-		self._options += (go_up,) # TODO: perhaps store parent?
+		self._options += (go_up,)
 
 		children = self._node.get_children(child_type)
 
 		if not children:
-			self._show_panel(self._options, self._on_children_done)
+			self._show_panel(self._options, self._on_children_done, self._on_highlight_done)
 			return
 
 		panel_options = list()
@@ -59,7 +57,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
 		assert(len(panel_options) == len(self._options))
 
-		self._show_panel(panel_options, self._on_children_done)
+		self._show_panel(panel_options, self._on_children_done, self._on_highlight_done)
 
 	# Displays a panel containing the current node's
 	# available children types. Types include func_type,
@@ -82,7 +80,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 			self._node.scope.type == class_type:
 				self._options.append(read + self._node.name)
 
-		self._show_panel(self._options, self._on_options_done)
+		self._show_panel(self._options, self._on_options_done, self._on_highlight_done)
 
 	def _on_options_done(self, ind):
 		# show_quick_panel() calls its callback with -1
@@ -103,7 +101,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		# When the user reads a scope, neither the current
 		# node nor the displayed menu should change
 		if (read + self._node.scope.name) in selection:
-			print(self._node.scope)
+			say(str(self._node.scope))
 			self._show_options_menu()
 		else:
 			self._show_children_menu(selection)
@@ -124,3 +122,10 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 							  parent=copy.deepcopy(self._node))
 
 		self._show_options_menu()
+
+	def _on_highlight_done(self, ind):
+		#say menu options when option is highlighted
+		#TODO: only read the body of the function when "read ___" is selected, not highlighted
+		say(str(self._options[ind]))
+
+
