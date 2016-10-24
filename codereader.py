@@ -37,50 +37,50 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 	#	@param: child_type: one of func_type, class_type, 
 	#						or other_type
 	def _show_children_menu(self, child_type):
-		# Options is a tuple because it must store a string
-		# and Scope() objects
-		self._options = tuple()
-		self._options += (go_up,)
+		self._panel_options = list()
+		self._panel_options.append(go_up)
 
 		children = self._node.get_children(child_type)
 
+		# If node has no children, only display 'go up'
 		if not children:
-			self._show_panel(self._options, self._on_children_done, self._on_highlight_done)
+			self._show_panel(self._panel_options, 
+							 self._on_children_done, 
+							 self._on_highlight_done)
 			return
 
-		panel_options = list()
-		panel_options.append(go_up)
+		self._children_options = dict()	
 
 		for child in children:
-			panel_options.append(child.name)
-			self._options += (child,)
+			self._panel_options.append(child.name)
+			self._children_options[child.name] = child
 
-		assert(len(panel_options) == len(self._options))
-
-		self._show_panel(panel_options, self._on_children_done, self._on_highlight_done)
+		self._show_panel(self._panel_options, 
+						 self._on_children_done, 
+						 self._on_highlight_done)
 
 	# Displays a panel containing the current node's
 	# available children types. Types include func_type,
 	# class_type, and other_type
 	def _show_options_menu(self):
-		self._options = list()
+		self._panel_options = list()
 
 		if not self._node.parent:
-			self._options.append(exit_program)
+			self._panel_options.append(exit_program)
 		else:
-			self._options.append(go_up)
+			self._panel_options.append(go_up)
 
 		children = self._node.get_children()
 
 		if children:
-			self._options += self._node.get_children()
+			self._panel_options += self._node.get_children()
 
 		# Functions and Classes can be read to the user
 		if self._node.scope.type == func_type or \
 			self._node.scope.type == class_type:
-				self._options.append(read + self._node.name)
+				self._panel_options.append(read + self._node.name)
 
-		self._show_panel(self._options, self._on_options_done, self._on_highlight_done)
+		self._show_panel(self._panel_options, self._on_options_done, self._on_highlight_done)
 
 	def _on_options_done(self, ind):
 		# show_quick_panel() calls its callback with -1
@@ -88,7 +88,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		if(ind == -1):
 			return
 
-		selection = self._options[ind]
+		selection = self._panel_options[ind]
 
 		if selection == exit_program:
 			return
@@ -112,20 +112,21 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		if(ind == -1):
 			return
 
-		selection = self._options[ind]
+		selection = self._panel_options[ind]
 
 		if(selection == go_up):
 			self._show_options_menu()
 
+		child = self._children_options[selection]
+
 		self._node = MenuNode(view=self.view, 
-							  scope=selection, 
+							  scope=child, 
 							  parent=copy.deepcopy(self._node))
 
 		self._show_options_menu()
 
 	def _on_highlight_done(self, ind):
 		#say menu options when option is highlighted
-		#TODO: only read the body of the function when "read ___" is selected, not highlighted
-		say(str(self._options[ind]))
+		say(self._panel_options[ind])
 
 
