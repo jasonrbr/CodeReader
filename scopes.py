@@ -24,6 +24,9 @@ class Scope():
 	def name(self):
 		return self._name
 
+	def read(self):
+		assert False
+
 class Function(Scope):
 	def __init__(self, view, body, declaration):
 		super().__init__(view, body,
@@ -36,7 +39,7 @@ class Function(Scope):
 	def declaration(self):
 		return "function {} returns {}".format(self._name, self._returns)
 
-	def __str__(self):
+	def read(self):
 		func_str = self.declaration + '\n'
 
 		definition = self._view.split_by_newlines(
@@ -62,7 +65,7 @@ class Class(Scope):
 	def declaration(self):
 		return 'class {}'.format(self._name)
 
-	def __str__(self):
+	def read(self):
 		class_str = self.declaration + '\n'
 
 		definition = self._view.split_by_newlines(
