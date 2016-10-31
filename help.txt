@@ -1,0 +1,6 @@
+This is the help text.
+Use the arrow keys to cycle through the available functions or classes.
+Press enter to make a selection.
+Command: _____ to run the plugin.
+Command: _____ to toggle line numbers on or off.
+End of the help document.
