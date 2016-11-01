@@ -1,6 +1,2 @@
-<<<<<<< HEAD
 test*
-=======
-
->>>>>>> master
-*.pyc
+*.py[doc]
