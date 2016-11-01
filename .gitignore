@@ -1,6 +1,9 @@
-<<<<<<< HEAD
-test*
-=======
+*.py[doc]
 
->>>>>>> master
-*.pyc
+
+*.tokens
+
+*.class
+
+*.java
+*.png
