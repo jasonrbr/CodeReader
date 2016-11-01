@@ -1,2 +1,5 @@
-test*
 *.py[doc]
+*.tokens
+*.class
+*.java
+*.png
