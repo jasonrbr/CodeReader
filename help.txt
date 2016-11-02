@@ -1,0 +1,11 @@
+This is the help text. Obtain this document by using the key binding ____ on Windows, or command shift "H" on Mac.
+To use Code Reader,
+Open the C plus plus file you want to read.
+On Windows: the command to run the plugin is _____.
+On Mac: the command to run the plugin is command shift "R".
+You can also toggle line numbers to be read to you.
+On Windows: the command is _____.
+On Mac: the command is _____.
+Use the arrow keys to cycle through the available functions or classes.
+Press enter to make a selection.
+End of the help document.
