@@ -1,9 +1,9 @@
 [
 	{ 
-		"keys": ["command+shift+r"],
+		"keys": ["command+c+r"],
 		"command": "code_reader"},
 	{
-		"keys": ["command+shift+h"],
+		"keys": ["command+shift+h+m"],
 		"command": "open_help"},
 	{
 		"keys": ["command+shift+l"],
