@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 import sys
 
+
+cur_path = os.path.dirname(os.path.abspath(__file__))
+
+paths = [
+	cur_path+'\\site-packages',
+	cur_path+'\\site-packages\\win32',
+	cur_path+'\\site-packages\\win32\\lib',
+]
+
 # Perform text to speech on input with the corresponding modules based on the operating system
 def say(input):
 	if (sys.platform == 'darwin'):

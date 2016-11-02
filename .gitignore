@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-test*
-=======
-
->>>>>>> master
->>>>>>> audio
-*.pyc
+*.py[doc]
+*.tokens
+*.class
+*.java
+*.png
