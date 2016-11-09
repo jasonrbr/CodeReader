@@ -1,11 +1,11 @@
 [
 	{ 
-		"keys": ["command+c+r"],
+		"keys": ["Ctrl+c+r"],
 		"command": "code_reader"},
 	{
-		"keys": ["command+shift+h+m"],
+		"keys": ["Ctrl+shift+h+m"],
 		"command": "open_help"},
 	{
-		"keys": ["command+shift+l"],
+		"keys": ["Ctrl+shift+l"],
 		"command": "toggle_line_numbers"}
 ]
