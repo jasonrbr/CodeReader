@@ -10,8 +10,9 @@ global_namespace = 'global namespace'
 
 # Menu option Strings:
 exit_program = 'exit'
-go_up = 'go up'
-read = 'read ' # Concat with scope name
+go_up = 'go up to scope, ' # Concat with scope you're currently in
+read = 'reed ' # Concat with scope name
+global_name = 'global'
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
 	def run(self, edit):		
@@ -38,7 +39,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 	#						or other_type
 	def _show_children_menu(self, child_type):
 		self._panel_options = list()
-		self._panel_options.append(go_up)
+		self._panel_options.append(go_up + global_name)
 
 		children = self._node.get_children(child_type)
 
@@ -68,7 +69,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		if not self._node.parent:
 			self._panel_options.append(exit_program)
 		else:
-			self._panel_options.append(go_up)
+			self._panel_options.append(go_up + self._node.scope.name)
 
 		children = self._node.get_children()
 
@@ -93,7 +94,8 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		if selection == exit_program:
 			return
 
-		if selection == go_up:
+		# if going back to the global scope
+		if selection == (go_up + global_name):
 			self._node = self._node.parent
 			self._show_options_menu()
 			return
@@ -114,7 +116,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
 		selection = self._panel_options[ind]
 
-		if(selection == go_up):
+		if(selection == go_up + global_name):
 			self._show_options_menu()
 
 		child = self._children_options[selection]
