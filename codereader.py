@@ -40,7 +40,8 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
     #                       or other_type
     def _show_children_menu(self, child_type):
         self._panel_options = list()
-        self._panel_options.append("See all children options for {}".format(self._node.name))
+        self._panel_options.append("Scope {}s {}".format(self._node.name, 
+                                                  child_type))
 
         children = self._node.get_children(child_type)
 
@@ -58,6 +59,8 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             self._panel_options.append(child.name)
             self._children_options[child.name] = child
 
+        self._panel_options.append("See all children options for {}".format(self._node.name))
+
         self._show_panel(self._panel_options, 
                          self._on_children_done, 
                          self._on_highlight_done)
@@ -67,11 +70,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
     # class_type, and other_type
     def _show_options_menu(self):
         self._panel_options = list()
-
-        # Add go_up hierarchy option if the current scope
-        # is not the global scope
-        if self._node.parent:
-            self._panel_options.append(go_up + self._node.parent.name)
+        self._panel_options.append("Scope {}".format(self._node.name))
 
         children = self._node.get_children()
 
@@ -84,6 +83,11 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             self._node.scope.type == class_type:
                 self._panel_options.append(read + self._node.name)
 
+        # Add go_up hierarchy option if the current scope
+        # is not the global scope
+        if self._node.parent:
+            self._panel_options.append(go_up + self._node.parent.name)
+
         self._show_panel(self._panel_options, self._on_options_done, self._on_highlight_done)
 
     def _on_options_done(self, ind):
@@ -92,8 +96,13 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         if(ind == -1):
             return
 
+        # The first item in the panel is the panel title
+        if(ind == 0):
+            self._show_options_menu()
+
         # if going back to the global scope
-        if self._node.parent and ind == 0:
+        end_ind = len(self._panel_options) - 1
+        if self._node.parent and ind == end_ind:
             self._node = self._node.parent
             self._show_options_menu()
             return
@@ -113,8 +122,13 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         # if the user cancels the panel
         if(ind == -1):
             return
-
+        
+        # The first item in the panel is the panel title
         if(ind == 0):
+            self._show_options_menu()
+       
+        end_ind = len(self._panel_options) - 1
+        if(ind == end_ind):
             self._show_options_menu()
 
         selection = self._panel_options[ind]

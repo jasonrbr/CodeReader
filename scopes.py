@@ -2,8 +2,8 @@ import sublime_plugin
 import sublime
 
 # Scope types
-func_type = 'function'
-class_type = 'class'
+func_type = 'functions'
+class_type = 'classes'
 other_type = 'other'
 
 
