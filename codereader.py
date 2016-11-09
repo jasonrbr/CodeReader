@@ -117,10 +117,8 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 		selection = self._panel_options[ind]
 
 		if(selection == go_up + global_namespace):
-			print('hi')
 			self._show_options_menu()
 
-		print(selection)
 		child = self._children_options[selection]
 
 		self._node = MenuNode(view=self.view, 
