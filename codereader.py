@@ -191,7 +191,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         if not self._node.parent:
             self._panel_options.append(exit_program)
         else:
-            self._panel_options.append(go_up)
+            self._panel_options.append(go_up + self._node.parent.name)
 
         children = self._node.get_children()
 
