@@ -1,6 +1,7 @@
 import sublime
 import sublime_plugin
 
+
 def get_decl_start(view, symbol_start):
     """
     Returns the start point of the symbol's declaration
@@ -8,7 +9,7 @@ def get_decl_start(view, symbol_start):
 
     Parameters:
         view - sublime view
-        symbol_start - the start point of the symbol 
+        symbol_start - the start point of the symbol
                        within the view
     """
     start_decl = symbol_start
@@ -29,6 +30,7 @@ def get_decl_start(view, symbol_start):
             break
 
     return start_decl
+
 
 def get_scope_end(view, symbol_end):
     """
@@ -78,11 +80,12 @@ def get_scope_end(view, symbol_end):
 
     return False, end_point
 
+
 def get_scope_region(view, symbol_reg):
     """
-    Returns the region of the scope associated 
+    Returns the region of the scope associated
     with the symbol
-    
+
     Parameters:
         view - sublime view
         symbol_reg - sublime.Region of a symbol in view
@@ -95,11 +98,12 @@ def get_scope_region(view, symbol_reg):
 
     return sublime.Region(declaration_start, end_point + 1)
 
+
 # For testing
 class TestCommand(sublime_plugin.TextCommand):
-    def run(self, edit):   
+    def run(self, edit):
         for pair in self.view.symbols():
             declaration_region = pair[0]
-            scope_region = get_scope_region(self.view, 
+            scope_region = get_scope_region(self.view,
                                             declaration_region)
             print(self.view.substr(scope_region))
