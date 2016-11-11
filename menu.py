@@ -138,6 +138,30 @@ class MenuTree():
 
         insert_node.add_child(child_node)
     
+    def _make_string(self, prefix, node):
+        str_ = "{}{}\n".format(prefix, node.scope.name)
+
+        children = list()
+            
+        funcs = node.get_children(func_scope_type)
+        if funcs:
+            children.extend(funcs)
+        classes = node.get_children(class_scope_type)
+        if classes:
+            children.extend(classes)
+
+        if children:
+            prefix += '\t'
+            for node in children:
+                str_ += self._make_string(prefix, node)
+
+        return str_
+
+
+    def __str__(self):
+        prefix = ""
+        return self._make_string(prefix, self._root)
+
     @property
     def root(self):
         return self._root
@@ -159,31 +183,4 @@ class MenuCommand(sublime_plugin.TextCommand):
         for scope in scopes:
             tree.push(scope)
 
-        root = tree.root
-        assert root.parent is None
-        print("Root: {}".format(root.scope.name))
-
-        root_funcs = root.get_children(func_scope_type)
-        root_classes = root.get_children(class_scope_type)
-        
-        for node in root_funcs:
-            assert node.parent is root
-            print("    Root child: {}".format(node.scope.name))
-
-        for node in root_classes:
-            assert node.parent is root
-            print("    Root child: {}".format(node.scope.name))
-
-            sub_nodes = list()
-            
-            funcs = node.get_children(func_scope_type)
-            if funcs:
-                sub_nodes.extend(funcs)
-            classes = node.get_children(class_scope_type)
-            if classes:
-                sub_nodes.extend(classes)
-
-            for subnode in sub_nodes:
-                assert subnode.parent is node
-                print("        {} child: {}".format(node.scope.name, subnode.scope.name))
-
+        print(str(tree))
