@@ -99,6 +99,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         # The first item in the panel is the panel title
         if(ind == 0):
             self._show_options_menu()
+            return
 
         # if going back to the global scope
         end_ind = len(self._panel_options) - 1
