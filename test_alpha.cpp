@@ -3,6 +3,9 @@ using namespace std;
 
 class ClassA {
 	int x;
+	class ClassD {
+		int foo();
+	};
 };
 
 int main() {

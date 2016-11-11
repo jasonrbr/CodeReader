@@ -2,25 +2,20 @@ import sublime_plugin
 import sublime
 
 # Scope types
-func_type = 'functions'
-class_type = 'classes'
-other_type = 'other'
+func_scope_type = 'functions'
+class_scope_type = 'classes'
+other_scope_type = 'other'
 
 
 class Scope():
-    def __init__(self, view, body, name, s_type=None):
+    def __init__(self, view, name, scope_type=None):
         self._view = view
-        self._type = s_type
-        self._body = body
+        self._scope_type = scope_type
         self._name = name
 
     @property
     def type(self):
-        return self._type
-
-    @property
-    def body(self):
-        return self._body
+        return self._scope_type
 
     @property
     def name(self):
@@ -29,63 +24,111 @@ class Scope():
 
 class Function(Scope):
     def __init__(self, view, body, declaration):
-        super().__init__(view, body,
-                         declaration.split()[1].split('(')[0],
-                         func_type)
+        """
+        Parameters:
+            body - Region containing body/definition excluding open and
+                    closing brackets
+            declaration - Region containing the declaration excluding opening
+                            bracket. If forward declared, this the forward
+                            declared region
+        """
 
-        self._returns = declaration.split()[0]
+        # Convert region to string
+        # Split on whitespace to get after return type
+        # Then go up to opening parenthesis to get function name
+        func_name = view.substr(declaration).split()[1].split('(')[0]
+        super().__init__(view,
+                         func_name,
+                         func_scope_type)
+        self._body = body
+        self._declaration = declaration
 
-    @property
-    def declaration(self):
-        return "function {} returns {}".format(self._name, self._returns)
-
-    def __str__(self):
-        func_str = self.declaration + '\n'
+    def get_panel_options(self):
+        panel_options = []
+        panel_options.append(self.declaration + ' and ' + self.params)
 
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
-        # Iterate all lines of code in the function
         for line in definition:
             line_str = self._view.substr(line)
 
-            if line_str.isspace() or not line_str:
-                func_str += 'empty line\n'
-            else:
-                func_str += line_str.lstrip() + '\n'
+            if line_str and not line_str.isspace():
+                panel_options.append(line_str.strip())
 
-        return func_str
+        return panel_options
 
+    def __eq__(self, other):
+        return (self.declaration == other.declaration and
+                self._params == other._params)
+
+    @property
+    def declaration(self):
+        return_type = self._view.substr(self._declaration).split()[0]
+        return "function {} returns {}".format(self._name, return_type)
+    
+    @property
+    def declaration_region(self):
+        return self._declaration
+
+    @property
+    def definition_region(self):
+        return self._body
+
+    @property
+    def params(self):
+        params = self._view.substr(
+            self._declaration).split('(')[1].split(')')[0].split(',')
+        params = [s.strip() for s in params]  # trim whitespace
+        return "takes {}".format(', '.join(params))
 
 class Class(Scope):
     def __init__(self, view, body, declaration):
-        super().__init__(view, body,
-                         declaration.split()[1], class_type)
+        class_name = view.substr(declaration).split()[1]
+        super().__init__(view,
+                         class_name,
+                         class_scope_type)
+        self._body = body
+        self._declaration = declaration
 
     @property
     def declaration(self):
         return 'class {}'.format(self._name)
 
-    def __str__(self):
-        class_str = self.declaration + '\n'
+    def get_panel_options(self):
+        panel_options = []
+        panel_options.append(self.declaration)
 
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
-        # Iterate all lines of code in the function
+        # TODO: Don't read body of member function (make sub menu?)
         for line in definition:
             line_str = self._view.substr(line)
 
-            if line_str.isspace() or not line_str:
-                class_str += 'empty line\n'
-            else:
-                class_str += line_str.lstrip() + '\n'
+            if line_str and not line_str.isspace():
+                panel_options.append(line_str.strip())
 
-        return class_str
+        return panel_options
 
+    def __eq__(self, other):
+        return self.declaration == other.declaration
+
+    @property
+    def declaration_region(self):
+        return self._declaration
+
+    @property
+    def definition_region(self):
+        return self._body
 
 # Test
 class ScopeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        func = Function(self.view, sublime.Region(82, 122), "int main() {")
-        print(str(func))
+        func = Function(self.view, sublime.Region(31, 53),
+                        sublime.Region(0, 28))
+        classA = Class(self.view, sublime.Region(71, 105),
+                       sublime.Region(56, 68))
+
+        print(func.get_panel_options())
+        print(classA.get_panel_options())

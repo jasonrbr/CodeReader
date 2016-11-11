@@ -1,32 +1,54 @@
 import sublime
 import sublime_plugin
+from collections import deque
 from .scopes import *
+from .parse import *
 
+global_namespace = 'global namespace'
 
 class MenuNode():
+    """
+    Attributes:
+        view - sublime view into text buffer 
+        scope - scope object associated with this node
+        parent - the parent of this node in the hierarchy tree.
+                 this node is root if parent is None
+        children - dictionary of scope type strings to a
+                   list of menu nodes. These nodes are the
+                   children of this node in the hierarchy tree
+    """
     def __init__(self, view, scope, parent=None):
         self._view = view
         self._scope = scope
 
         self._parent = parent
         self._children = {
-            other_type: list(),
-            class_type: list(),
-            func_type: list()}
+            class_scope_type: list(),
+            func_scope_type: list()}
 
-        if self._scope.type != func_type:
-            self._generate_children()
+    def add_child(self, node):
+        """
+        Appends node to the children list corresponding to
+        the node's type. 
 
-    # @param: child_type: when child_type == None, returns a list
-    #                     of available child_types. If the node doesn't
-    #                     have a certain child_type, it's not included
-    #                     in the list. Child types include func_type
-    #                     class_type, and other_type
-    #
-    #                     when child_type != None, returns a list of
-    #                     all children with that available type. If none
-    #                     exist, returns None
+        Parameters:
+            node - MenuNode whose scope region is within the region 
+                   of this menu node's scope region
+        """
+        assert (node._scope.type == func_scope_type or
+                    node._scope.type == class_scope_type)
+        self._children[node._scope.type].append(node)
+
     def get_children(self, child_type=None):
+        """
+        Returns list of children nodes of the specified scope type.
+        If scope type not given, returns list of available scope types;
+        these are the children scope types that map to a non-empty list
+
+        Parameters:
+            child_type - indicates which node list to return.
+                         If None, returns available scope types. 
+        """
         if (child_type and child_type in self._children and
                 len(self._children[child_type])):
             return self._children[child_type]
@@ -53,129 +75,112 @@ class MenuNode():
     def scope(self):
         return self._scope
 
-    # Stores all children found within the body of this
-    # MenuNode's scope
-    def _generate_children(self):
-        idx = self._scope.body.begin()
-        while True:
-            start_region = \
-                self._view.find('{', idx)
+def generate_global_node(view):
+    global_reg = sublime.Region(0, view.size())
+    global_scope = Scope(view=view, 
+                         name=global_namespace)
+    global_node = MenuNode(view=view, 
+                           scope=global_scope)
+    return global_node
 
-            # All available children have been found
-            if not start_region:
-                return
+class MenuTree():
+    def __init__(self, view):
+        self._view = view
+        self._root = generate_global_node(self._view)
 
-            # All children in scope have been found
-            if start_region.end() > self._scope.body.end():
-                return
+    def push(self, new_scope):
+        stack = list()
+        queue = deque()
+        
+        queue.append(self._root)
 
-            child = self._get_child(start_region)
+        while queue:
+            node = queue.popleft()
 
-            # A child is missing a closing bracket
-            if not child:
-                return
+            # Functions can't have children
+            if node._scope.type == func_scope_type:
+                continue
 
-            self._children[child.type].append(child)
+            stack.append(node)
 
-            idx = child.body.end() + 1
+            class_children = node.get_children(class_scope_type)
 
-    # Find and returns a child of this MenuNode's scope
-    #   @param: start_region: region containing the declaration of
-    #           the child
-    def _get_child(self, start_region):
-        # Get child's declaration
-        declaration = self._view.substr(self._view.line(start_region))
+            if not class_children:
+                continue
 
-        # Get child's definition (body)
-        body_start_row = self._view.rowcol(start_region.begin())[0] + 1
-        body_start_point = self._view.text_point(body_start_row, 0)
-        body = self._get_child_body(body_start_point, self._scope._body.end())
+            for node in class_children:
+                queue.append(node)
 
-        # Child has no closing bracket
-        if not body:
-            return None
+        insert_node = None
+        while stack:
+            node = stack.pop()
 
-        if 'class' in declaration or 'struct' in declaration:
-            return Class(self._view, body, declaration)
-        else:
-            return Function(self._view, body, declaration)
+            if node is self._root:
+                insert_node = node
+                break
+            
+            assert node.scope.type == class_scope_type
 
-    # NOTE: Assumes all lines contain and end with a single ';'
-    #
-    # Finds and returns the Region containing the child's definition (body)
-    #   @param: start_point: point located in the first line of the child body
-    #   @param: end_point: point at end of the MenuNode's scope. If final '}'
-    #           is not found once this point is reached, the child has no
-    #           closing bracket (compile error) and 'None' is returned
-    def _get_child_body(self, start_point, end_point):
-        body_regions = \
-            self._view.split_by_newlines(
-                sublime.Region(start_point, end_point))
-
-        # Tracks the number of open/closed brackets
-        # respectively
-        open_count = 1
-        closed_count = 0
-
-        end_point = None
-
-        for region in body_regions:
-            line = self._view.substr(region)
-            if '{' in line:
-                open_count += line.count('{')
-            if '}' in line:
-                closed_count += line.count('}')
-
-            end_point = region.end()
-
-            if open_count == closed_count:
+            node_reg = node.scope.definition_region
+            new_scope_reg = new_scope.declaration_region
+            
+            if (new_scope_reg.begin() >= node_reg.begin() and
+                    node_reg.end() >= new_scope_reg.end()):
+                
+                insert_node = node
                 break
 
-        # Child has no closing bracket
-        if open_count != closed_count:
-            return None
+        assert insert_node
 
-        return sublime.Region(start_point, end_point)
+        child_node = MenuNode(view=self._view, 
+                              scope=new_scope,
+                              parent=insert_node)
+
+        insert_node.add_child(child_node)
+    
+    def _make_string(self, prefix, node):
+        str_ = "{}{}\n".format(prefix, node.scope.name)
+
+        children = list()
+            
+        funcs = node.get_children(func_scope_type)
+        if funcs:
+            children.extend(funcs)
+        classes = node.get_children(class_scope_type)
+        if classes:
+            children.extend(classes)
+
+        if children:
+            prefix += '\t'
+            for node in children:
+                str_ += self._make_string(prefix, node)
+
+        return str_
+
+
+    def __str__(self):
+        prefix = ""
+        return self._make_string(prefix, self._root)
+
+    @property
+    def root(self):
+        return self._root
 
 
 # Test
 class MenuCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        file_start = 0
-        file_end = self.view.size()
+        scopes = list()
+        # Convert all symbols in the view to 
+        # scopes
+        for pair in self.view.symbols():
+            scope = get_scope(self.view, pair[0])
+            # TODO: handle fwd declarations
+            if scope:
+                scopes.append(scope)
 
-        scope = Scope(view=self.view,
-                      body=sublime.Region(file_start, file_end),
-                      name="Global")
+        tree = MenuTree(self.view)
+        for scope in scopes:
+            tree.push(scope)
 
-        menu = MenuNode(self.view, scope=scope)
-
-        print("{}: ".format(menu.name))
-        print(menu.get_children())
-        print(menu.get_children(class_type))
-        print(menu.get_children(func_type))
-
-        children = menu.get_children(class_type)
-
-        classA_menu = MenuNode(self.view, scope=children[0])
-        classB_menu = MenuNode(self.view, scope=children[1])
-        classC_menu = MenuNode(self.view, scope=children[2])
-
-        assert(classA_menu.get_children() is None)
-        assert(classA_menu.get_children(class_type) is None)
-        assert(classA_menu.get_children(func_type) is None)
-        assert(classA_menu.get_children(other_type) is None)
-        print("{}: None".format(classA_menu.name))
-
-        assert(classB_menu.get_children() is None)
-        assert(classB_menu.get_children(class_type) is None)
-        assert(classB_menu.get_children(func_type) is None)
-        assert(classB_menu.get_children(other_type) is None)
-        print("{}: None".format(classB_menu.name))
-
-        print("{}: ".format(classC_menu.name))
-        print(classC_menu.get_children())
-        print(classC_menu.get_children(func_type))
-
-        assert(classC_menu.get_children(class_type) is None)
-        assert(classC_menu.get_children(other_type) is None)
+        print(str(tree))
