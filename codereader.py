@@ -15,11 +15,14 @@ scope_prfx = 'scope '
 title_str = 'scope {}s {}'
 return_to_options_prfx = 'See all children options for '
 
+# Read option menu strings:
+quit_str = 'Quit reading'
+
 # Option menu Indices
 title_ind = 0
 read_ind = 1
 
-def show_panel(options, on_done, on_hilight):
+def show_panel(options, on_done, on_hilight=None):
     """
     Displays a sublime panel.
 
@@ -95,6 +98,14 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
                    self._on_options_done,
                    self._on_highlight_done)
 
+    def _show_read_menu(self):
+        self._panel_options = self._curr_node.scope.get_panel_options()
+        self._panel_options.append(quit_str)
+
+        show_panel(self._panel_options,
+                   self._on_read_done,
+                   self._on_highlight_done)
+
     def _on_children_done(self, ind):
         """
         Callback function for children menu. Updates the current node
@@ -151,7 +162,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         # When the current node is not the global namespace node, then
         # selecting the read index opens the read scope panel
         if(ind == read_ind) and self._curr_node.parent:
-            print('TODO: read')
+            self._show_read_menu()
             return
 
         # When the current node is not the global namespace node, then
@@ -164,6 +175,21 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
         self._selected_child_type = self._panel_options[ind]
         self._show_children_menu(self._selected_child_type)
+
+    def _on_read_done(self, ind):
+        # Panel passes -1 in callback if user exits
+        # out of the panel
+        if(ind == -1):
+            return
+          
+        # Display the current node's options menu
+        if ind == self._get_go_up_ind():
+            self._show_options_menu()
+            return
+
+        show_panel(self._panel_options,
+                   self._on_read_done,
+                   self._on_highlight_done)
 
     """
     Utility Member Functions:
