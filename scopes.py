@@ -83,7 +83,7 @@ class Function(Scope):
 
         # If takes no params
         if params[0] == '':
-        	return ''
+            return ''
         return " takes {}".format(', '.join(params))
 
 
