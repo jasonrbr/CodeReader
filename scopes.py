@@ -60,13 +60,13 @@ class Function(Scope):
 
     def __eq__(self, other):
         return (self.declaration == other.declaration and
-                self._params == other._params)
+                self.params == other.params)
 
     @property
     def declaration(self):
         return_type = self._view.substr(self._declaration).split()[0]
         return "function {} returns {}".format(self._name, return_type)
-    
+
     @property
     def declaration_region(self):
         return self._declaration
@@ -81,6 +81,7 @@ class Function(Scope):
             self._declaration).split('(')[1].split(')')[0].split(',')
         params = [s.strip() for s in params]  # trim whitespace
         return "takes {}".format(', '.join(params))
+
 
 class Class(Scope):
     def __init__(self, view, body, declaration):
@@ -121,6 +122,7 @@ class Class(Scope):
     @property
     def definition_region(self):
         return self._body
+
 
 # Test
 class ScopeCommand(sublime_plugin.TextCommand):
