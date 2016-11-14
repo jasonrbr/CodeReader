@@ -80,7 +80,11 @@ class Function(Scope):
         params = self._view.substr(
             self._declaration).split('(')[1].split(')')[0].split(',')
         params = [s.strip() for s in params]  # trim whitespace
-        return "takes {}".format(', '.join(params))
+
+        # If takes no params
+        if params[0] == '':
+        	return ''
+        return " takes {}".format(', '.join(params))
 
 
 class Class(Scope):
