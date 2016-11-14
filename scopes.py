@@ -45,16 +45,32 @@ class Function(Scope):
 
     def get_panel_options(self):
         panel_options = []
-        panel_options.append(self.declaration + ' and ' + self.params)
+
+        # TODO: integrate with config.py
+        line_numbers_on = True
+
+        decl_str = self.declaration + ' and ' + self.params
+        if line_numbers_on:
+            row, col = self._view.rowcol(self._declaration.a)
+            decl_str = str(row) + ' ' + decl_str
+
+        panel_options.append(decl_str)
 
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
         for line in definition:
+
             line_str = self._view.substr(line)
+            row, col = self._view.rowcol(line.a)
 
             if line_str and not line_str.isspace():
-                panel_options.append(line_str.strip())
+
+                line_str = line_str.strip()
+                if line_numbers_on:
+                    line_str = str(row) + ' ' + line_str
+
+                panel_options.append(line_str)
 
         return panel_options
 
@@ -66,7 +82,7 @@ class Function(Scope):
     def declaration(self):
         return_type = self._view.substr(self._declaration).split()[0]
         return "function {} returns {}".format(self._name, return_type)
-    
+
     @property
     def declaration_region(self):
         return self._declaration
@@ -81,6 +97,7 @@ class Function(Scope):
             self._declaration).split('(')[1].split(')')[0].split(',')
         params = [s.strip() for s in params]  # trim whitespace
         return "takes {}".format(', '.join(params))
+
 
 class Class(Scope):
     def __init__(self, view, body, declaration):
@@ -121,6 +138,7 @@ class Class(Scope):
     @property
     def definition_region(self):
         return self._body
+
 
 # Test
 class ScopeCommand(sublime_plugin.TextCommand):
