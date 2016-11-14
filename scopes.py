@@ -7,7 +7,7 @@ class_scope_type = 'classes'
 other_scope_type = 'other'
 
 
-class Scope():
+class Scope(object):
     def __init__(self, view, name, scope_type=None):
         self._view = view
         self._scope_type = scope_type
@@ -42,6 +42,9 @@ class Function(Scope):
                          func_scope_type)
         self._body = body
         self._declaration = declaration
+        self._params = self._view.substr(
+            self._declaration).split('(')[1].split(')')[0].split(',')
+        self._params = [s.strip() for s in self._params]  # trim whitespace
 
     def get_panel_options(self):
         panel_options = []
@@ -59,14 +62,15 @@ class Function(Scope):
         return panel_options
 
     def __eq__(self, other):
-        return (self.declaration == other.declaration and
-                self._params == other._params)
+        return (self.type == other.type and
+                self.declaration == other.declaration and
+                self.params == other.params)
 
     @property
     def declaration(self):
         return_type = self._view.substr(self._declaration).split()[0]
         return "function {} returns {}".format(self._name, return_type)
-    
+
     @property
     def declaration_region(self):
         return self._declaration
@@ -77,10 +81,7 @@ class Function(Scope):
 
     @property
     def params(self):
-        params = self._view.substr(
-            self._declaration).split('(')[1].split(')')[0].split(',')
-        params = [s.strip() for s in params]  # trim whitespace
-        return "takes {}".format(', '.join(params))
+        return "takes {}".format(', '.join(self._params))
 
 class Class(Scope):
     def __init__(self, view, body, declaration):
@@ -90,10 +91,6 @@ class Class(Scope):
                          class_scope_type)
         self._body = body
         self._declaration = declaration
-
-    @property
-    def declaration(self):
-        return 'class {}'.format(self._name)
 
     def get_panel_options(self):
         panel_options = []
@@ -112,7 +109,12 @@ class Class(Scope):
         return panel_options
 
     def __eq__(self, other):
-        return self.declaration == other.declaration
+        return (self.type == other.type and 
+                self.declaration == other.declaration)
+
+    @property
+    def declaration(self):
+        return 'class {}'.format(self._name)
 
     @property
     def declaration_region(self):
