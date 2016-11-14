@@ -1,4 +1,11 @@
 [
-  { "keys": ["ctrl+shift+l"], "command": "toggle_line_number" },
-  { "keys": ["ctrl+shift+q"], "command": "example"}
+	{ 
+		"keys": ["Ctrl+c+r"],
+		"command": "code_reader"},
+	{
+		"keys": ["Ctrl+shift+h+m"],
+		"command": "open_help"},
+	{
+		"keys": ["Ctrl+shift+l"],
+		"command": "toggle_line_numbers"}
 ]
