@@ -30,3 +30,11 @@ class ClassC {
 		cout << x << endl;
 	}
 };
+
+void classB::member(int x) {
+	return x * 2;
+}
+
+int classA::classD::foo() {
+	cout << "in foo\n";
+}

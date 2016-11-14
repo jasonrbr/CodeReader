@@ -3,8 +3,8 @@ import sublime
 
 # Scope types
 func_scope_type = 'functions'
-class_scope_type = 'classes'
 other_scope_type = 'other'
+class_scope_type = 'classes'
 
 
 class Scope(object):
@@ -32,16 +32,13 @@ class Function(Scope):
                             bracket. If forward declared, this the forward
                             declared region
         """
+        self._body = body
+        self._declaration = declaration
 
-        # Convert region to string
-        # Split on whitespace to get after return type
-        # Then go up to opening parenthesis to get function name
-        func_name = view.substr(declaration).split()[1].split('(')[0]
+        func_name = self._get_func_name(view)
         super().__init__(view,
                          func_name,
                          func_scope_type)
-        self._body = body
-        self._declaration = declaration
 
     def get_panel_options(self):
         panel_options = []
@@ -84,6 +81,19 @@ class Function(Scope):
 
         return "takes {}".format(', '.join(params))
 
+    def _get_func_name(self, view):
+        func_name = view.substr(self._declaration)
+
+        # Grab word immediately after return type
+        func_name = func_name.split()[1]
+        # Grab word immediately before first parenthensis
+        func_name = func_name.split('(')[0]
+        # Grab word at end of scope operator chain
+        scope_ops_arr = func_name.split('::')
+        func_name = scope_ops_arr.pop()
+
+        return func_name.strip()
+
 
 class Class(Scope):
     def __init__(self, view, body, declaration):
@@ -111,7 +121,7 @@ class Class(Scope):
         return panel_options
 
     def __eq__(self, other):
-        return (self.type == other.type and 
+        return (self.type == other.type and
                 self.declaration == other.declaration)
 
     @property
