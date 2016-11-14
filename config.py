@@ -2,7 +2,7 @@
 
 class Config:
     """
-    Config class to serve as a container and obejct for CodeReader 
+    Config class to serve as a container and obejct for CodeReader
         configurations
     Formatted as a json file, but loaded as a dictioanry in memory
     """
