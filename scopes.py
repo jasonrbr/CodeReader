@@ -7,7 +7,7 @@ class_scope_type = 'classes'
 other_scope_type = 'other'
 
 
-class Scope():
+class Scope(object):
     def __init__(self, view, name, scope_type=None):
         self._view = view
         self._scope_type = scope_type
@@ -59,7 +59,8 @@ class Function(Scope):
         return panel_options
 
     def __eq__(self, other):
-        return (self.declaration == other.declaration and
+        return (self.type == other.type and
+                self.declaration == other.declaration and
                 self.params == other.params)
 
     @property
@@ -80,6 +81,7 @@ class Function(Scope):
         params = self._view.substr(
             self._declaration).split('(')[1].split(')')[0].split(',')
         params = [s.strip() for s in params]  # trim whitespace
+
         return "takes {}".format(', '.join(params))
 
 
@@ -91,10 +93,6 @@ class Class(Scope):
                          class_scope_type)
         self._body = body
         self._declaration = declaration
-
-    @property
-    def declaration(self):
-        return 'class {}'.format(self._name)
 
     def get_panel_options(self):
         panel_options = []
@@ -113,7 +111,12 @@ class Class(Scope):
         return panel_options
 
     def __eq__(self, other):
-        return self.declaration == other.declaration
+        return (self.type == other.type and 
+                self.declaration == other.declaration)
+
+    @property
+    def declaration(self):
+        return 'class {}'.format(self._name)
 
     @property
     def declaration_region(self):
