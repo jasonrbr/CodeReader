@@ -59,8 +59,16 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
         # Make menu show scope's name and params
         for node in children_nodes:
-            self._panel_options.append(node.scope.name + node.scope.params)
-            self._children_node_options[node.scope.name] = node
+
+            # only add params if it's a function
+            if node.scope.type == func_scope_type:
+                self._panel_options.append(node.scope.name +
+                                           node.scope.params)
+                self._children_node_options[node.scope.name +
+                                            node.scope.params] = node
+            else:
+                self._panel_options.append(node.scope.name)
+                self._children_node_options[node.scope.name] = node
 
         self._panel_options.append(return_to_options_prfx +
                                    self._curr_node.scope.name)

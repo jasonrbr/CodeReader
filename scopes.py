@@ -45,7 +45,11 @@ class Function(Scope):
 
     def get_panel_options(self):
         panel_options = []
-        panel_options.append(self.declaration + ' and ' + self.params)
+
+        if not self.params:
+            panel_options.append(self.declaration)
+        else:
+            panel_options.append(self.declaration + ' and' + self.params)
 
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
