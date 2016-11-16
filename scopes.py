@@ -3,8 +3,8 @@ import sublime
 
 # Scope types
 func_scope_type = 'functions'
-class_scope_type = 'classes'
 other_scope_type = 'other'
+class_scope_type = 'classes'
 
 
 class Scope():
@@ -32,11 +32,7 @@ class Function(Scope):
                             bracket. If forward declared, this the forward
                             declared region
         """
-
-        # Convert region to string
-        # Split on whitespace to get after return type
-        # Then go up to opening parenthesis to get function name
-        func_name = view.substr(declaration).split()[1].split('(')[0]
+        func_name = self._get_func_name(view)
         super().__init__(view,
                          func_name,
                          func_scope_type)
@@ -89,6 +85,20 @@ class Function(Scope):
         if params[0] == '':
             return ''
         return " takes {}".format(', '.join(params))
+
+    def _get_func_name(self, view):
+        func_name = view.substr(self._declaration)
+
+        # Grab word immediately after return type
+        func_name = func_name.split()[1]
+        # Grab word immediately before first parenthensis
+        func_name = func_name.split('(')[0]
+        # Grab word at end of scope operator chain
+        scope_ops_arr = func_name.split('::')
+
+        func_name = scope_ops_arr.pop().strip()
+
+        return func_name
 
 
 class Class(Scope):
