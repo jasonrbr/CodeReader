@@ -38,25 +38,7 @@ class Function(Scope):
                          func_scope_type)
         self._body = body
         self._declaration = declaration
-
-    def get_panel_options(self):
-        panel_options = []
-
-        if not self.params:
-            panel_options.append(self.declaration)
-        else:
-            panel_options.append(self.declaration + ' and' + self.params)
-
-        definition = self._view.split_by_newlines(
-            sublime.Region(self._body.begin(), self._body.end()))
-
-        for line in definition:
-            line_str = self._view.substr(line)
-
-            if line_str and not line_str.isspace():
-                panel_options.append(line_str.strip())
-
-        return panel_options
+        self._panel_options = self._get_panel_options()
 
     def __eq__(self, other):
         return (self.declaration == other.declaration and
@@ -74,6 +56,10 @@ class Function(Scope):
     @property
     def definition_region(self):
         return self._body
+
+    @property
+    def panel_options(self):
+        return self._panel_options
 
     @property
     def params(self):
@@ -99,6 +85,26 @@ class Function(Scope):
         func_name = scope_ops_arr.pop().strip()
 
         return func_name
+
+    def _get_panel_options(self):
+        panel_options = []
+
+        # The declaration is the first panel option
+        if self.params:
+            panel_options.append(self.declaration + ' and' + self.params)
+        else:
+            panel_options.append(self.declaration)
+
+        definition = self._view.split_by_newlines(
+            sublime.Region(self._body.begin(), self._body.end()))
+
+        for line in definition:
+            line_str = self._view.substr(line)
+
+            if line_str and not line_str.isspace():
+                panel_options.append(line_str.strip())
+
+        return panel_options
 
 
 class Class(Scope):
