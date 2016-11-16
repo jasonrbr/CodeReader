@@ -1,0 +1,4 @@
+This project does not support:
+	* loops, if-statements, etc without open/close brackets
+	* forward declarations
+	* templates
