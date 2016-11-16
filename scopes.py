@@ -98,8 +98,25 @@ class Function(Scope):
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
+        subscope_stack = list()
+
         for line in definition:
             line_str = self._view.substr(line)
+
+            if "}" in line_str:
+                subscope_type = subscope_stack.pop()
+                subscope_stack.append("exiting " + subscope_type)
+
+            if "for" in line_str:
+                subscope_stack.append("for loop")
+            elif "while" in line_str:
+                subscope_stack.append("while loop")
+            elif "if" in line_str and "else" not in line_str:
+                subscope_stack.append("if statement")
+            elif "if" in line_str and "else" in line_str:
+                subscope_stack.append("else if statement")
+            elif "if" not in line_str and "else" in line_str:
+                subscope_stack.append("else statement")
 
             if line_str and not line_str.isspace():
                 panel_options.append(line_str.strip())
