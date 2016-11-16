@@ -4,7 +4,7 @@ using namespace std;
 class ClassA {
 	int x;
 	class ClassD {
-		int foo();
+		void member(int x);
 	};
 };
 
@@ -26,13 +26,19 @@ void foo(int x) {
 }
 
 class ClassC {
-	void member(int x) {
-		cout << x << endl;
-	}
+	void member(int x);
 };
 
-void classB::member(int x) {
+void ClassB::member(int x) {
 	return x * 2;
+}
+
+void ClassA::ClassD::member(int x) {
+	return "hello world";
+}
+
+void ClassC::member(int x) {
+	return "bob";
 }
 
 int classA::classD::foo() {

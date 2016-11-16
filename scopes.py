@@ -35,7 +35,7 @@ class Function(Scope):
         self._body = body
         self._declaration = declaration
 
-        func_name = self._get_func_name(view)
+        func_name, self._member_of = self._get_func_name(view)
         super().__init__(view,
                          func_name,
                          func_scope_type)
@@ -90,9 +90,13 @@ class Function(Scope):
         func_name = func_name.split('(')[0]
         # Grab word at end of scope operator chain
         scope_ops_arr = func_name.split('::')
-        func_name = scope_ops_arr.pop()
+        
+        func_name = scope_ops_arr.pop().strip()
+        member_of = None
+        if scope_ops_arr:
+            member_of = scope_ops_arr.pop().strip()
 
-        return func_name.strip()
+        return func_name, member_of
 
 
 class Class(Scope):
@@ -122,7 +126,8 @@ class Class(Scope):
 
     def __eq__(self, other):
         return (self.type == other.type and
-                self.declaration == other.declaration)
+                self.declaration == other.declaration and
+                self._member_of == other._member_of)
 
     @property
     def declaration(self):
