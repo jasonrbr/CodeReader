@@ -1,11 +1,27 @@
 import sublime_plugin
 import sublime
+import string
+import re
 
 # Scope types
 func_scope_type = 'functions'
 class_scope_type = 'classes'
 other_scope_type = 'other'
 
+# raw symbols and their translations when passing to say
+# must be in decreasing order to enforce
+symbol_list = {r'cout': 'see out', r'endl': 'endline',
+               r'!=': ' is not equal to ', r'==': ' is equal to ',
+               r'+=': ' plus equals ', r'-=': ' minus equals ',
+               r'*=': ' times equals ', r'/=': ' divide equals ',
+               r'<<': ',', r'>>': ',', r';': ',',
+               r'<=': ' less than or equal to ',
+               r'>=': ' greater than or equal to ',
+               r'*': ' star ', r'&': ' ampersand ', r'(': '', r')': ',',
+               r'|': ' bar ', r'<': ' less than ', r'>': ' greater than '}
+
+# Need to sort by descending length
+symbols = sorted(symbol_list.keys(), key=len, reverse=True)
 
 class Scope():
     def __init__(self, view, name, scope_type=None):
@@ -56,8 +72,12 @@ class Function(Scope):
 
         for line in definition:
             line_str = self._view.substr(line)
-
             if line_str and not line_str.isspace():
+
+                # Replace symbols so "say" doesn't behave weirdly
+                pattern = re.compile('|'.join(re.escape(key) for key in symbols))
+                line_str = pattern.sub(lambda x: symbol_list[x.group()], line_str)
+
                 panel_options.append(line_str.strip())
 
         return panel_options
