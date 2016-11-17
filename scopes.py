@@ -18,7 +18,7 @@ symbol_list = {r'cout': 'see out', r'endl': 'endline',
                r'<=': ' less than or equal to ',
                r'//': 'comment: ', r'/*': 'comment:', r'*/': 'end comment',
                r'>=': ' greater than or equal to ',
-               r'*': ' star ', r'&': ' ampersand ', r'(': '', r')': ',',
+               r'*': ' star ', r'&': ' ampersand ', r'(': ' ', r')': ' ',
                r'|': ' bar ', r'<': ' less than ', r'>': ' greater than '}
 
 # Need to sort by descending length
