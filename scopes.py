@@ -1,10 +1,28 @@
 import sublime_plugin
 import sublime
+import re
 
 # Scope types
 func_scope_type = 'functions'
 other_scope_type = 'other'
 class_scope_type = 'classes'
+
+
+# raw symbols and their translations when passing to say
+# must be in decreasing order to enforce
+symbol_list = {r'cout': 'see out', r'endl': 'endline',
+               r'!=': ' is not equal to ', r'==': ' is equal to ',
+               r'-=': ' minus equals ', r'->': ' arrow ',
+               r'*=': ' times equals ', r'/=': ' divide equals ',
+               r'<<': ',', r'>>': ',', r';': ',',
+               r'<=': ' less than or equal to ',
+               r'//': 'comment: ', r'/*': 'comment:', r'*/': 'end comment',
+               r'>=': ' greater than or equal to ',
+               r'*': ' star ', r'&': ' ampersand ', r'(': '', r')': ',',
+               r'|': ' bar ', r'<': ' less than ', r'>': ' greater than '}
+
+# Need to sort by descending length
+symbols = sorted(symbol_list.keys(), key=len, reverse=True)
 
 
 class Scope():
@@ -33,9 +51,7 @@ class Function(Scope):
                             declared region
         """
         self._body = body
-        print(view.substr(self._body))
         self._declaration = declaration
-        print(view.substr(self._declaration))
 
         func_name = self._get_func_name(view)
         super().__init__(view,
@@ -92,7 +108,7 @@ class Function(Scope):
 
     def _get_panel_options(self):
         panel_options = []
-
+        print('asdf')
         # The declaration is the first panel option
         if self.params:
             panel_options.append(self.declaration + ' and' + self.params)
@@ -123,7 +139,16 @@ class Function(Scope):
                 subscope_stack.append("else statement")
 
             if line_str and not line_str.isspace():
-                panel_options.append(line_str.strip())
+                pattern = re.compile('|'.join(re.escape(key) for key in symbols))
+                parsed = pattern.sub(lambda x: symbol_list[x.group()], line_str)
+                panel_options.append(parsed.strip())
+
+        # Replace all symbols in panel option strings so "say"
+        # doesn't break
+        # for idx in range(0, len(panel_options)):
+        #     pattern = re.compile('|'.join(re.escape(key) for key in symbols))
+        #     panel_options[idx] = (
+        #         pattern.sub(lambda x: symbol_list[x.group()], line_str))
 
         return panel_options
 
