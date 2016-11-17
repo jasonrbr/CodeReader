@@ -32,12 +32,16 @@ class Function(Scope):
                             bracket. If forward declared, this the forward
                             declared region
         """
+        self._body = body
+        print(view.substr(self._body))
+        self._declaration = declaration
+        print(view.substr(self._declaration))
+
         func_name = self._get_func_name(view)
         super().__init__(view,
                          func_name,
                          func_scope_type)
-        self._body = body
-        self._declaration = declaration
+
         self._panel_options = self._get_panel_options()
 
     def __eq__(self, other):
@@ -102,10 +106,10 @@ class Function(Scope):
 
         for line in definition:
             line_str = self._view.substr(line)
-
             if "}" in line_str:
                 subscope_type = subscope_stack.pop()
-                subscope_stack.append("exiting " + subscope_type)
+                panel_options.append("exiting " + subscope_type)
+                continue
 
             if "for" in line_str:
                 subscope_stack.append("for loop")
@@ -168,10 +172,9 @@ class Class(Scope):
 # Test
 class ScopeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        func = Function(self.view, sublime.Region(31, 53),
-                        sublime.Region(0, 28))
-        classA = Class(self.view, sublime.Region(71, 105),
-                       sublime.Region(56, 68))
+        func = Function(self.view, sublime.Region(14, 67),
+                        sublime.Region(1, 12))
 
-        print(func.get_panel_options())
-        print(classA.get_panel_options())
+        print(self.view.substr(func._declaration))
+        print(self.view.substr(func._body))
+        print(func.panel_options)
