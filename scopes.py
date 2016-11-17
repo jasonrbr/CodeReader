@@ -12,10 +12,11 @@ other_scope_type = 'other'
 # must be in decreasing order to enforce
 symbol_list = {r'cout': 'see out', r'endl': 'endline',
                r'!=': ' is not equal to ', r'==': ' is equal to ',
-               r'+=': ' plus equals ', r'-=': ' minus equals ',
+               r'-=': ' minus equals ',
                r'*=': ' times equals ', r'/=': ' divide equals ',
                r'<<': ',', r'>>': ',', r';': ',',
                r'<=': ' less than or equal to ',
+               r'//': 'comment: ', r'/*': 'comment:', r'*/': 'end comment',
                r'>=': ' greater than or equal to ',
                r'*': ' star ', r'&': ' ampersand ', r'(': '', r')': ',',
                r'|': ' bar ', r'<': ' less than ', r'>': ' greater than '}
