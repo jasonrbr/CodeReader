@@ -1,12 +1,12 @@
 import sublime_plugin
 import sublime
-import string
 import re
 
 # Scope types
 func_scope_type = 'functions'
-class_scope_type = 'classes'
 other_scope_type = 'other'
+class_scope_type = 'classes'
+
 
 # raw symbols and their translations when passing to say
 # must be in decreasing order to enforce
@@ -23,6 +23,7 @@ symbol_list = {r'cout': 'see out', r'endl': 'endline',
 
 # Need to sort by descending length
 symbols = sorted(symbol_list.keys(), key=len, reverse=True)
+
 
 class Scope():
     def __init__(self, view, name, scope_type=None):
@@ -49,39 +50,15 @@ class Function(Scope):
                             bracket. If forward declared, this the forward
                             declared region
         """
-
-        # Convert region to string
-        # Split on whitespace to get after return type
-        # Then go up to opening parenthesis to get function name
-        func_name = view.substr(declaration).split()[1].split('(')[0]
-        super().__init__(view,
-                         func_name,
-                         func_scope_type)
         self._body = body
         self._declaration = declaration
 
-    def get_panel_options(self):
-        panel_options = []
+        func_name = self._get_func_name(view)
+        super().__init__(view,
+                         func_name,
+                         func_scope_type)
 
-        if not self.params:
-            panel_options.append(self.declaration)
-        else:
-            panel_options.append(self.declaration + ' and' + self.params)
-
-        definition = self._view.split_by_newlines(
-            sublime.Region(self._body.begin(), self._body.end()))
-
-        for line in definition:
-            line_str = self._view.substr(line)
-            if line_str and not line_str.isspace():
-
-                # Replace symbols so "say" doesn't behave weirdly
-                pattern = re.compile('|'.join(re.escape(key) for key in symbols))
-                line_str = pattern.sub(lambda x: symbol_list[x.group()], line_str)
-
-                panel_options.append(line_str.strip())
-
-        return panel_options
+        self._panel_options = self._get_panel_options()
 
     def __eq__(self, other):
         return (self.declaration == other.declaration and
@@ -101,6 +78,10 @@ class Function(Scope):
         return self._body
 
     @property
+    def panel_options(self):
+        return self._panel_options
+
+    @property
     def params(self):
         params = self._view.substr(
             self._declaration).split('(')[1].split(')')[0].split(',')
@@ -110,6 +91,66 @@ class Function(Scope):
         if params[0] == '':
             return ''
         return " takes {}".format(', '.join(params))
+
+    def _get_func_name(self, view):
+        func_name = view.substr(self._declaration)
+
+        # Grab word immediately after return type
+        func_name = func_name.split()[1]
+        # Grab word immediately before first parenthensis
+        func_name = func_name.split('(')[0]
+        # Grab word at end of scope operator chain
+        scope_ops_arr = func_name.split('::')
+
+        func_name = scope_ops_arr.pop().strip()
+
+        return func_name
+
+    def _get_panel_options(self):
+        panel_options = []
+        print('asdf')
+        # The declaration is the first panel option
+        if self.params:
+            panel_options.append(self.declaration + ' and' + self.params)
+        else:
+            panel_options.append(self.declaration)
+
+        definition = self._view.split_by_newlines(
+            sublime.Region(self._body.begin(), self._body.end()))
+
+        subscope_stack = list()
+
+        for line in definition:
+            line_str = self._view.substr(line)
+            if "}" in line_str:
+                subscope_type = subscope_stack.pop()
+                panel_options.append("exiting " + subscope_type)
+                continue
+
+            if "for" in line_str:
+                subscope_stack.append("for loop")
+            elif "while" in line_str:
+                subscope_stack.append("while loop")
+            elif "if" in line_str and "else" not in line_str:
+                subscope_stack.append("if statement")
+            elif "if" in line_str and "else" in line_str:
+                subscope_stack.append("else if statement")
+            elif "if" not in line_str and "else" in line_str:
+                subscope_stack.append("else statement")
+
+            if line_str and not line_str.isspace():
+                pattern = re.compile('|'.join(re.escape(key) for key in symbols))
+                parsed = pattern.sub(lambda x: symbol_list[x.group()], line_str)
+                panel_options.append(parsed.strip())
+
+        # Replace all symbols in panel option strings so "say"
+        # doesn't break
+        # for idx in range(0, len(panel_options)):
+        #     pattern = re.compile('|'.join(re.escape(key) for key in symbols))
+        #     panel_options[idx] = (
+        #         pattern.sub(lambda x: symbol_list[x.group()], line_str))
+
+        return panel_options
 
 
 class Class(Scope):
@@ -156,10 +197,9 @@ class Class(Scope):
 # Test
 class ScopeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        func = Function(self.view, sublime.Region(31, 53),
-                        sublime.Region(0, 28))
-        classA = Class(self.view, sublime.Region(71, 105),
-                       sublime.Region(56, 68))
+        func = Function(self.view, sublime.Region(14, 67),
+                        sublime.Region(1, 12))
 
-        print(func.get_panel_options())
-        print(classA.get_panel_options())
+        print(self.view.substr(func._declaration))
+        print(self.view.substr(func._body))
+        print(func.panel_options)
