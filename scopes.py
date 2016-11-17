@@ -12,7 +12,7 @@ other_scope_type = 'other'
 # must be in decreasing order to enforce
 symbol_list = {r'cout': 'see out', r'endl': 'endline',
                r'!=': ' is not equal to ', r'==': ' is equal to ',
-               r'-=': ' minus equals ',
+               r'-=': ' minus equals ', r'->': ' arrow ',
                r'*=': ' times equals ', r'/=': ' divide equals ',
                r'<<': ',', r'>>': ',', r';': ',',
                r'<=': ' less than or equal to ',
