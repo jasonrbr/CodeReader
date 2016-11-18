@@ -108,6 +108,7 @@ class Function(Scope):
 
     def _get_panel_options(self):
         panel_options = []
+
         # The declaration is the first panel option
         if self.params:
             panel_options.append(self.declaration + ' and' + self.params)
@@ -161,11 +162,26 @@ class Class(Scope):
         self._body = body
         self._declaration = declaration
 
+    def __eq__(self, other):
+        return self.declaration == other.declaration
+
     @property
     def declaration(self):
         return 'class {}'.format(self._name)
 
-    def get_panel_options(self):
+    @property
+    def declaration_region(self):
+        return self._declaration
+
+    @property
+    def definition_region(self):
+        return self._body
+
+    @property
+    def panel_options(self):
+        return self._get_panel_options()
+
+    def _get_panel_options(self):
         panel_options = []
         panel_options.append(self.declaration)
 
@@ -180,17 +196,6 @@ class Class(Scope):
                 panel_options.append(line_str.strip())
 
         return panel_options
-
-    def __eq__(self, other):
-        return self.declaration == other.declaration
-
-    @property
-    def declaration_region(self):
-        return self._declaration
-
-    @property
-    def definition_region(self):
-        return self._body
 
 
 # Test
