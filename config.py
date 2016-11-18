@@ -1,12 +1,15 @@
 import json
 import os
 import sublime
+import sublime_plugin
+
 
 
 class Config:
     '''Config class to serve as a container and obejct for CodeReader
     configurations
     Formatted as a json file, but loaded as a dictioanry in memory'''
+    is_initialized = False
     DEFAULT_CONFIG = {
         'read_comments': False,
         'read_line_numbers': False,
@@ -28,6 +31,8 @@ class Config:
         '''
 
         # load the file from memory or default
+
+        Config.is_initialized = True
         if not fn:
             Config.config = Config.DEFAULT_CONFIG
             Config._save_config()
@@ -81,8 +86,22 @@ class Config:
             print("Error saving to config file. Write failed.")
 
     @staticmethod
-    def __str__():
+    def toggle(param):
+        val = not Config.get(param)
+        Config.set(param, val)
+
+    @staticmethod
+    def _tostring():
         return str(Config.config)
+
+class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        Config.toggle('read_line_numbers')
+
+class ToggleCommentsCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        Config.toggle('read_comments')
+
 
 
 Config.init()
