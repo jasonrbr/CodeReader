@@ -4,8 +4,8 @@ Open the C plus plus file you want to read
 On Windows the command to run the plugin is control shift "C" "R"
 On Mac the command to run the plugin is command shift "C" "R"
 You can also toggle line numbers to be read to you
-On Windows the command is control shift "L"
-On Mac the command is command shift "L"
+On Windows the command is control shift "U" and "7"
+On Mac the command is command shift "U" and "7"
 Use the arrow keys to cycle through the available functions or classes
 Press enter to make a selection
 End of the help document
