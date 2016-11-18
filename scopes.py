@@ -108,7 +108,6 @@ class Function(Scope):
 
     def _get_panel_options(self):
         panel_options = []
-        print('asdf')
         # The declaration is the first panel option
         if self.params:
             panel_options.append(self.declaration + ' and' + self.params)
