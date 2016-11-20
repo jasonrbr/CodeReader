@@ -25,6 +25,14 @@ symbol_list = {r'cout': 'see out', r'endl': 'endline',
 symbols = sorted(symbol_list.keys(), key=len, reverse=True)
 
 
+# Returns a stripped string with symbols mapped to their
+# appropriate English words
+def parse_symbols(input_str):
+    pattern = re.compile('|'.join(re.escape(key) for key in symbols))
+    parsed = pattern.sub(lambda x: symbol_list[x.group()], input_str)
+    return parsed.strip()
+
+
 class Scope():
     def __init__(self, view, name, scope_type=None):
         self._view = view
@@ -67,7 +75,8 @@ class Function(Scope):
     @property
     def declaration(self):
         return_type = self._view.substr(self._declaration).split()[0]
-        return "function {} returns {}".format(self._name, return_type)
+        parsed_return_type = parse_symbols(return_type)  # Map to English and trim
+        return "function {} returns {}".format(self._name, parsed_return_type)
 
     @property
     def declaration_region(self):
@@ -85,7 +94,7 @@ class Function(Scope):
     def params(self):
         params = self._view.substr(
             self._declaration).split('(')[1].split(')')[0].split(',')
-        params = [s.strip() for s in params]  # trim whitespace
+        params = [parse_symbols(s) for s in params]  # map to English
 
         # If takes no params
         if params[0] == '':
@@ -139,16 +148,18 @@ class Function(Scope):
                 subscope_stack.append("else statement")
 
             if line_str and not line_str.isspace():
-                pattern = re.compile('|'.join(re.escape(key) for key in symbols))
-                parsed = pattern.sub(lambda x: symbol_list[x.group()], line_str)
-                panel_options.append(parsed.strip())
 
-        # Replace all symbols in panel option strings so "say"
-        # doesn't break
-        # for idx in range(0, len(panel_options)):
-        #     pattern = re.compile('|'.join(re.escape(key) for key in symbols))
-        #     panel_options[idx] = (
-        #         pattern.sub(lambda x: symbol_list[x.group()], line_str))
+                # Determine if need to specify the end of a single line comment
+                single_line_comment = False
+                if '//' in line_str:
+                    single_line_comment = True
+
+                parsed_string = parse_symbols(line_str)
+                panel_options.append(parsed_string)
+
+                # Check for single line comment
+                if single_line_comment:
+                    panel_options.append('end comment')
 
         return panel_options
 
