@@ -16,7 +16,7 @@ symbol_list = {r'cout': 'see out', r'endl': 'endline',
                r'*=': ' times equals ', r'/=': ' divide equals ',
                r'<<': ',', r'>>': ',', r';': ',',
                r'<=': ' less than or equal to ',
-               r'//': 'comment: ', r'/*': 'comment:', r'*/': 'end comment',
+               r'//': 'comment: ', r'/*': 'comment:', r'*/': 'end comment:',
                r'>=': ' greater than or equal to ',
                r'*': ' star ', r'&': ' ampersand ', r'(': ' ', r')': ' ',
                r'|': ' bar ', r'<': ' less than ', r'>': ' greater than '}
@@ -155,7 +155,15 @@ class Function(Scope):
                     single_line_comment = True
 
                 parsed_string = parse_symbols(line_str)
-                panel_options.append(parsed_string)
+
+                # Check if comment reading is off
+                # If it is, skip appending the comment to the list
+                if 'comment:' in parsed_string and not Config().get(read_comment):
+                    print("found comment and skipping")
+                    continue
+
+                else:
+                    panel_options.append(parsed_string)
 
                 # Check for single line comment
                 if single_line_comment:
