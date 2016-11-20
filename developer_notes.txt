@@ -3,4 +3,4 @@ This project does not support:
 	* forward declarations
 	* templates
 	* nice do-while loop formating
-	* closing brackets must be on their own line
+	* closing brackets on the same line as opening brackets
