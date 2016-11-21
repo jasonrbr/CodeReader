@@ -4,7 +4,6 @@ import sublime
 import sublime_plugin
 
 
-
 class Config:
     '''Config class to serve as a container and obejct for CodeReader
     configurations
@@ -94,14 +93,15 @@ class Config:
     def _tostring():
         return str(Config.config)
 
+
 class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         Config.toggle('read_line_numbers')
 
+
 class ToggleCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         Config.toggle('read_comments')
-
 
 
 Config.init()
