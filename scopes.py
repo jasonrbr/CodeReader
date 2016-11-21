@@ -197,6 +197,11 @@ class Function(Scope):
                         single_line_comment = True
 
                 parsed_string = parse_symbols(line_str)
+
+                if read_line_numbers:
+                    row, col = self._view.rowcol(line.a)
+                    parsed_string = 'line ' + str(row) + ', ' + parsed_string
+
                 panel_options.append(parsed_string)
 
                 # Check for single line comment
@@ -249,6 +254,7 @@ class Class(Scope):
 
             # TODO: toggle comments on or off like for functions
             # TODO: add 'exiting scope /blah/' logic like above for functions
+            # TODO: toggle line numbers being on or off like for functions
 
             if line_str and not line_str.isspace():
                 parsed_string = parse_symbols(line_str)
