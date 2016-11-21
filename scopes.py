@@ -52,7 +52,7 @@ class Function(Scope):
         decl_str = self.declaration + ' and ' + self.params
         if line_numbers_on:
             row, col = self._view.rowcol(self._declaration.a)
-            decl_str = str(row) + ' ' + decl_str
+            decl_str = 'line ' + str(row) + '! ' + decl_str
 
         panel_options.append(decl_str)
 
