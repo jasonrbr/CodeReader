@@ -4,3 +4,5 @@ This project does not support:
 	* templates
 	* nice do-while loop formating
 	* closing brackets on the same line as opening brackets
+
+To toggle comments and/or line numbers, the key binding must be run before starting CodeReader.py

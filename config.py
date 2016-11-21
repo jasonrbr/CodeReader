@@ -8,10 +8,10 @@ import sublime_plugin
 class Config:
     '''Config class to serve as a container and obejct for CodeReader
     configurations
-    Formatted as a json file, but loaded as a dictioanry in memory'''
+    Formatted as a json file, but loaded as a dictionary in memory'''
     is_initialized = False
     DEFAULT_CONFIG = {
-        'read_comments': False,
+        'read_comments': True,
         'read_line_numbers': False,
 
     }
