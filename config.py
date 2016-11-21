@@ -11,7 +11,7 @@ class Config:
     is_initialized = False
     DEFAULT_CONFIG = {
         'read_comments': True,
-        'read_line_numbers': False,
+        'read_line_numbers': True,
 
     }
     config = {}
