@@ -6,10 +6,11 @@ from .parse import *
 
 global_namespace = 'global namespace'
 
+
 class MenuNode():
     """
     Attributes:
-        view - sublime view into text buffer 
+        view - sublime view into text buffer
         scope - scope object associated with this node
         parent - the parent of this node in the hierarchy tree.
                  this node is root if parent is None
@@ -29,14 +30,14 @@ class MenuNode():
     def add_child(self, node):
         """
         Appends node to the children list corresponding to
-        the node's type. 
+        the node's type.
 
         Parameters:
-            node - MenuNode whose scope region is within the region 
+            node - MenuNode whose scope region is within the region
                    of this menu node's scope region
         """
         assert (node._scope.type == func_scope_type or
-                    node._scope.type == class_scope_type)
+                node._scope.type == class_scope_type)
         self._children[node._scope.type].append(node)
 
     def get_children(self, child_type=None):
@@ -47,7 +48,7 @@ class MenuNode():
 
         Parameters:
             child_type - indicates which node list to return.
-                         If None, returns available scope types. 
+                         If None, returns available scope types.
         """
         if (child_type and child_type in self._children and
                 len(self._children[child_type])):
@@ -75,13 +76,14 @@ class MenuNode():
     def scope(self):
         return self._scope
 
+
 def generate_global_node(view):
-    global_reg = sublime.Region(0, view.size())
-    global_scope = Scope(view=view, 
+    global_scope = Scope(view=view,
                          name=global_namespace)
-    global_node = MenuNode(view=view, 
+    global_node = MenuNode(view=view,
                            scope=global_scope)
     return global_node
+
 
 class MenuTree():
     def __init__(self, view):
@@ -91,7 +93,7 @@ class MenuTree():
     def push(self, new_scope):
         stack = list()
         queue = deque()
-        
+
         queue.append(self._root)
 
         while queue:
@@ -118,31 +120,31 @@ class MenuTree():
             if node is self._root:
                 insert_node = node
                 break
-            
+
             assert node.scope.type == class_scope_type
 
             node_reg = node.scope.definition_region
             new_scope_reg = new_scope.declaration_region
-            
+
             if (new_scope_reg.begin() >= node_reg.begin() and
                     node_reg.end() >= new_scope_reg.end()):
-                
+
                 insert_node = node
                 break
 
         assert insert_node
 
-        child_node = MenuNode(view=self._view, 
+        child_node = MenuNode(view=self._view,
                               scope=new_scope,
                               parent=insert_node)
 
         insert_node.add_child(child_node)
-    
+
     def _make_string(self, prefix, node):
         str_ = "{}{}\n".format(prefix, node.scope.name)
 
         children = list()
-            
+
         funcs = node.get_children(func_scope_type)
         if funcs:
             children.extend(funcs)
@@ -157,7 +159,6 @@ class MenuTree():
 
         return str_
 
-
     def __str__(self):
         prefix = ""
         return self._make_string(prefix, self._root)
@@ -171,7 +172,7 @@ class MenuTree():
 class MenuCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         scopes = list()
-        # Convert all symbols in the view to 
+        # Convert all symbols in the view to
         # scopes
         for pair in self.view.symbols():
             scope = get_scope(self.view, pair[0])

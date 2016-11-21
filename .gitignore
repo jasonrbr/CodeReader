@@ -4,3 +4,4 @@
 *.java
 *.png
 test_*
+.cr_config

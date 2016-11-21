@@ -1,14 +1,13 @@
 import sublime
 import sublime_plugin
-import copy
 from .audio import say
-from .menu import MenuNode, MenuTree
+from .menu import MenuTree
 from .parse import *
 from .scopes import *
 
 # Menu option menu strings:
 go_up_prfx = 'go up to scope, '
-read_prfx = 'reed ' # Note: reed not read for proper pronunciation 
+read_prfx = 'reed '  # Note: reed not read for proper pronunciation
 scope_prfx = 'scope '
 
 # Child option menu strings:
@@ -22,6 +21,7 @@ quit_str = 'Quit reading'
 title_ind = 0
 read_ind = 1
 
+
 def show_panel(options, on_done, on_hilight=None):
     """
     Displays a sublime panel.
@@ -31,7 +31,7 @@ def show_panel(options, on_done, on_hilight=None):
         on_done - callback function called when user selects a
                     panel option
         on_hilight - callback function called when user changes
-                    which panel option the cursor is hilighting 
+                    which panel option the cursor is hilighting
     """
     sublime.active_window().show_quick_panel(options,
                                              on_done,
@@ -44,7 +44,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         self._show_options_menu()
 
     def _show_children_menu(self, child_type):
-        """ 
+        """
         Displays a panel containing the current node's
         children of the specified child_type
         """
@@ -57,9 +57,18 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
         self._children_node_options = dict()
 
+        # Make menu show scope's name and params
         for node in children_nodes:
-            self._panel_options.append(node.scope.name)
-            self._children_node_options[node.scope.name] = node
+
+            # only add params if it's a function
+            if node.scope.type == func_scope_type:
+                self._panel_options.append(node.scope.name +
+                                           node.scope.params)
+                self._children_node_options[node.scope.name +
+                                            node.scope.params] = node
+            else:
+                self._panel_options.append(node.scope.name)
+                self._children_node_options[node.scope.name] = node
 
         self._panel_options.append(return_to_options_prfx +
                                    self._curr_node.scope.name)
@@ -71,16 +80,16 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
     def _show_options_menu(self):
         """
         Displays options menu containing the current node's
-        available child types 
+        available child types
         """
         self._panel_options = list()
-        self._panel_options.append(scope_prfx + 
+        self._panel_options.append(scope_prfx +
                                    self._curr_node.scope.name)
 
-        # If current node is not the global namespace, append 
+        # If current node is not the global namespace, append
         # read scope option
         if self._curr_node.parent:
-            self._panel_options.append(read_prfx + 
+            self._panel_options.append(read_prfx +
                                        self._curr_node.scope.name)
 
         scope_type_options = self._curr_node.get_children()
@@ -91,7 +100,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         # Add go up hierarchy option if the current node is
         # not the global namespace
         if self._curr_node.parent:
-            self._panel_options.append(go_up_prfx + 
+            self._panel_options.append(go_up_prfx +
                                        self._curr_node.parent.scope.name)
 
         show_panel(self._panel_options,
@@ -99,7 +108,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
                    self._on_highlight_done)
 
     def _show_read_menu(self):
-        self._panel_options = self._curr_node.scope.get_panel_options()
+        self._panel_options = self._curr_node.scope.panel_options
         self._panel_options.append(quit_str)
 
         show_panel(self._panel_options,
@@ -137,7 +146,6 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         self._curr_node = self._children_node_options[child_name]
         self._show_options_menu()
 
-
     def _on_options_done(self, ind):
         """
         Callback function for options menu. Displays the children menu
@@ -157,7 +165,6 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         if(ind == title_ind):
             self._show_options_menu()
             return
-
 
         # When the current node is not the global namespace node, then
         # selecting the read index opens the read scope panel
@@ -181,7 +188,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         # out of the panel
         if(ind == -1):
             return
-          
+
         # Display the current node's options menu
         if ind == self._get_go_up_ind():
             self._show_options_menu()
