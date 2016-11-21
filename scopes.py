@@ -76,7 +76,8 @@ class Function(Scope):
     @property
     def declaration(self):
         return_type = self._view.substr(self._declaration).split()[0]
-        parsed_return_type = parse_symbols(return_type)  # Map to English and trim
+        # Map to English and trim
+        parsed_return_type = parse_symbols(return_type)
         return "function {} returns {}".format(self._name, parsed_return_type)
 
     @property
@@ -119,19 +120,27 @@ class Function(Scope):
     def _get_panel_options(self):
         panel_options = []
 
+        # init the config file for reading
+        Config.init()
+        read_line_numbers = Config.get('read_line_numbers')
+
+        decl_str = self.declaration
+
         # The declaration is the first panel option
         if self.params:
-            panel_options.append(self.declaration + ' and' + self.params)
-        else:
-            panel_options.append(self.declaration)
+            decl_str += ' and' + self.params
+
+        if read_line_numbers:
+            row, col = self._view.rowcol(self._declaration.a)
+            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
+
+        panel_options.append(decl_str)
 
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
         subscope_stack = list()
 
-        # init the config file for reading
-        Config.init()
         single_line_comment = False
         multi_line_comment_found_begin = False
         multi_line_comment_found_end = False
@@ -171,7 +180,8 @@ class Function(Scope):
                         continue
 
                     # If there is more of the multi line comment to be found
-                    if multi_line_comment_found_begin and not multi_line_comment_found_end:
+                    if (multi_line_comment_found_begin and
+                            not multi_line_comment_found_end):
                         continue
 
                     # Found the end of the multi line comment!
@@ -187,6 +197,11 @@ class Function(Scope):
                         single_line_comment = True
 
                 parsed_string = parse_symbols(line_str)
+
+                if read_line_numbers:
+                    row, col = self._view.rowcol(line.a)
+                    parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
+
                 panel_options.append(parsed_string)
 
                 # Check for single line comment
@@ -195,6 +210,7 @@ class Function(Scope):
                     single_line_comment = False
 
         return panel_options
+
 
 
 class Class(Scope):
@@ -238,12 +254,14 @@ class Class(Scope):
 
             # TODO: toggle comments on or off like for functions
             # TODO: add 'exiting scope /blah/' logic like above for functions
+            # TODO: toggle line numbers being on or off like for functions
 
             if line_str and not line_str.isspace():
                 parsed_string = parse_symbols(line_str)
                 panel_options.append(parsed_string)
 
         return panel_options
+
 
 
 # Test
