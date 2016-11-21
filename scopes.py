@@ -1,6 +1,7 @@
 import sublime_plugin
 import sublime
 import re
+from .config import *
 
 # Scope types
 func_scope_type = 'functions'
@@ -129,6 +130,12 @@ class Function(Scope):
 
         subscope_stack = list()
 
+        # init the config file for reading
+        Config.init()
+        single_line_comment = False
+        multi_line_comment_found_begin = False
+        multi_line_comment_found_end = False
+
         for line in definition:
             line_str = self._view.substr(line)
             if "}" in line_str:
@@ -149,25 +156,44 @@ class Function(Scope):
 
             if line_str and not line_str.isspace():
 
-                # Determine if need to specify the end of a single line comment
-                single_line_comment = False
-                if '//' in line_str:
-                    single_line_comment = True
+                # Is reading_comments off?
+                if not Config.get('read_comments'):
+                    print('skipping comment')
+
+                    # If it's a single line comment
+                    if '//' in line_str:
+                        single_line_comment = True
+                        continue
+
+                    # Find start of multi line comment
+                    if '/*' in line_str:
+                        multi_line_comment_found_begin = True
+                        multi_line_comment_found_end = False
+                        continue
+
+                    # If there is more of the multi line comment to be found
+                    if multi_line_comment_found_begin and not multi_line_comment_found_end:
+                        continue
+
+                    # Found the end of the multi line comment!
+                    if '*/' in line_str:
+                        multi_line_comment_found_end = True
+                        multi_line_comment_found_begin = False
+                        continue
+
+                # Need to read comments
+                else:
+                    # If it's a single line comment
+                    if '//' in line_str:
+                        single_line_comment = True
 
                 parsed_string = parse_symbols(line_str)
-
-                # Check if comment reading is off
-                # If it is, skip appending the comment to the list
-                if 'comment:' in parsed_string and not Config().get(read_comment):
-                    print("found comment and skipping")
-                    continue
-
-                else:
-                    panel_options.append(parsed_string)
+                panel_options.append(parsed_string)
 
                 # Check for single line comment
                 if single_line_comment:
                     panel_options.append('end comment')
+                    single_line_comment = False
 
         return panel_options
 
@@ -211,8 +237,12 @@ class Class(Scope):
         for line in definition:
             line_str = self._view.substr(line)
 
+            # TODO: toggle comments on or off like for functions
+            # TODO: add 'exiting scope /blah/' logic like above for functions
+
             if line_str and not line_str.isspace():
-                panel_options.append(line_str.strip())
+                parsed_string = parse_symbols(line_str)
+                panel_options.append(parsed_string)
 
         return panel_options
 
