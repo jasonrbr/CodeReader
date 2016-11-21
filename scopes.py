@@ -11,7 +11,7 @@ class_scope_type = 'classes'
 
 # raw symbols and their translations when passing to say
 # must be in decreasing order to enforce
-symbol_list = {r'cout': 'see out', r'endl': 'endline',
+symbol_list = {r'cout': 'see out', r'cin': 'see in', r'endl': 'endline',
                r'!=': ' is not equal to ', r'==': ' is equal to ',
                r'-=': ' minus equals ', r'->': ' arrow ',
                r'*=': ' times equals ', r'/=': ' divide equals ',
