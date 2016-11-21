@@ -132,7 +132,7 @@ class Function(Scope):
 
         if read_line_numbers:
             row, col = self._view.rowcol(self._declaration.a)
-            decl_str = 'line ' + str(row) + ', ' + decl_str
+            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
 
         panel_options.append(decl_str)
 
@@ -200,7 +200,7 @@ class Function(Scope):
 
                 if read_line_numbers:
                     row, col = self._view.rowcol(line.a)
-                    parsed_string = 'line ' + str(row) + ', ' + parsed_string
+                    parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
 
                 panel_options.append(parsed_string)
 
