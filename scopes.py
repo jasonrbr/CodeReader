@@ -158,7 +158,6 @@ class Function(Scope):
 
                 # Is reading_comments off?
                 if not Config.get('read_comments'):
-                    print('skipping comment')
 
                     # If it's a single line comment
                     if '//' in line_str:
@@ -191,7 +190,7 @@ class Function(Scope):
                 panel_options.append(parsed_string)
 
                 # Check for single line comment
-                if single_line_comment:
+                if single_line_comment and Config.get('read_comments'):
                     panel_options.append('end comment')
                     single_line_comment = False
 
