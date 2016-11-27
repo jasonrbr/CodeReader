@@ -1,131 +1,227 @@
 import sublime
 import sublime_plugin
-import copy
-from .menu import MenuNode	
-from .scopes import *
 from .audio import say
+from .menu import MenuTree
+from .parse import *
+from .scopes import *
 
-# Name of global Scope
-global_namespace = 'global namespace'
+# Menu option menu strings:
+go_up_prfx = 'go up to scope, '
+read_prfx = 'reed '  # Note: reed not read for proper pronunciation
+scope_prfx = 'scope '
 
-# Menu option Strings:
-exit_program = 'exit'
-go_up = 'go up'
-read = 'read ' # Concat with scope name
+# Child option menu strings:
+title_str = 'scope {}s {}'
+return_to_options_prfx = 'See all children options for '
+
+# Read option menu strings:
+quit_str = 'Quit reading'
+
+# Option menu Indices
+title_ind = 0
+read_ind = 1
+
+
+def show_panel(options, on_done, on_hilight=None):
+    """
+    Displays a sublime panel.
+
+    Parameters:
+        options - list of strings to be displayed in the panel
+        on_done - callback function called when user selects a
+                    panel option
+        on_hilight - callback function called when user changes
+                    which panel option the cursor is hilighting
+    """
+    sublime.active_window().show_quick_panel(options,
+                                             on_done,
+                                             on_highlight=on_hilight)
+
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
-	def run(self, edit):		
-		file_start = 0
-		file_end = self.view.size()
-		src_code = sublime.Region(file_start, file_end)
-			
-		# Set root to Global Namespace node
-		global_scope = Scope(view=self.view, body=src_code, name=global_namespace)
-		self._node = MenuNode(view=self.view, scope=global_scope)
+    def run(self, edit):
+        self._curr_node = self._get_hierarchy_tree().root
+        self._show_options_menu()
 
-		self._show_options_menu()
+    def _show_children_menu(self, child_type):
+        """
+        Displays a panel containing the current node's
+        children of the specified child_type
+        """
+        self._panel_options = list()
+        self._panel_options.append(title_str.format(self._curr_node.name,
+                                                    child_type))
 
-	# Displays a sublime panel
-	#	@param: options: list of strings for selection
-	#	@param: on_done: callback function
-	#	@param: on_highlighted: callback function
-	def _show_panel(self, options, on_done, on_highlight):
-		sublime.active_window().show_quick_panel(options, on_done, on_highlight=on_highlight)
+        children_nodes = self._curr_node.get_children(child_type)
+        assert children_nodes
 
-	# Displays a panel containing the current node's
-	# children of the specified type.
-	#	@param: child_type: one of func_type, class_type, 
-	#						or other_type
-	def _show_children_menu(self, child_type):
-		# Options is a tuple because it must store a string
-		# and Scope() objects
-		self._options = tuple()
-		self._options += (go_up,)
+        self._children_node_options = dict()
 
-		children = self._node.get_children(child_type)
+        # Make menu show scope's name and params
+        for node in children_nodes:
 
-		if not children:
-			self._show_panel(self._options, self._on_children_done, self._on_highlight_done)
-			return
+            # only add params if it's a function
+            if node.scope.type == func_scope_type:
+                self._panel_options.append(node.scope.name +
+                                           node.scope.params)
+                self._children_node_options[node.scope.name +
+                                            node.scope.params] = node
+            else:
+                self._panel_options.append(node.scope.name)
+                self._children_node_options[node.scope.name] = node
 
-		panel_options = list()
-		panel_options.append(go_up)
+        self._panel_options.append(return_to_options_prfx +
+                                   self._curr_node.scope.name)
 
-		for child in children:
-			panel_options.append(child.name)
-			self._options += (child,)
+        show_panel(self._panel_options,
+                   self._on_children_done,
+                   self._on_highlight_done)
 
-		assert(len(panel_options) == len(self._options))
+    def _show_options_menu(self):
+        """
+        Displays options menu containing the current node's
+        available child types
+        """
+        self._panel_options = list()
+        self._panel_options.append(scope_prfx +
+                                   self._curr_node.scope.name)
 
-		self._show_panel(panel_options, self._on_children_done, self._on_highlight_done)
+        # If current node is not the global namespace, append
+        # read scope option
+        if self._curr_node.parent:
+            self._panel_options.append(read_prfx +
+                                       self._curr_node.scope.name)
 
-	# Displays a panel containing the current node's
-	# available children types. Types include func_type,
-	# class_type, and other_type
-	def _show_options_menu(self):
-		self._options = list()
+        scope_type_options = self._curr_node.get_children()
 
-		if not self._node.parent:
-			self._options.append(exit_program)
-		else:
-			self._options.append(go_up)
+        if scope_type_options:
+            self._panel_options.extend(scope_type_options)
 
-		children = self._node.get_children()
+        # Add go up hierarchy option if the current node is
+        # not the global namespace
+        if self._curr_node.parent:
+            self._panel_options.append(go_up_prfx +
+                                       self._curr_node.parent.scope.name)
 
-		if children:
-			self._options += self._node.get_children()
+        show_panel(self._panel_options,
+                   self._on_options_done,
+                   self._on_highlight_done)
 
-		# Functions and Classes can be read to the user
-		if self._node.scope.type == func_type or \
-			self._node.scope.type == class_type:
-				self._options.append(read + self._node.name)
+    def _show_read_menu(self):
+        self._panel_options = self._curr_node.scope.panel_options
+        self._panel_options.append(quit_str)
 
-		self._show_panel(self._options, self._on_options_done, self._on_highlight_done)
+        show_panel(self._panel_options,
+                   self._on_read_done,
+                   self._on_highlight_done)
 
-	def _on_options_done(self, ind):
-		# show_quick_panel() calls its callback with -1
-		# if the user cancels the panel
-		if(ind == -1):
-			return
+    def _on_children_done(self, ind):
+        """
+        Callback function for children menu. Updates the current node
+        to the selected child, or displays the options menu again.
 
-		selection = self._options[ind]
+        Parameters:
+            ind - the panel index that the user selected
+        """
 
-		if selection == exit_program:
-			return
+        # Panel passes -1 in callback if user exits
+        # out of the panel
+        if(ind == -1):
+            return
 
-		if selection == go_up:
-			self._node = self._node.parent
-			self._show_options_menu()
-			return
+        # Display the current node's options menu
+        if ind == self._get_go_up_ind():
+            self._show_options_menu()
+            return
 
-		# When the user reads a scope, neither the current
-		# node nor the displayed menu should change
-		if (read + self._node.scope.name) in selection:
-			say(str(self._node.scope))
-			self._show_options_menu()
-		else:
-			self._show_children_menu(selection)
+        # Do not change panel state if user selects
+        # the title
+        if(ind == title_ind):
+            self._show_children_menu(self._selected_child_type)
+            return
 
-	def _on_children_done(self, ind):
-		# show_quick_panel() calls its callback with -1
-		# if the user cancels the panel
-		if(ind == -1):
-			return
+        # The current node becomes the selected child node
+        # (go one level down the tree)
+        child_name = self._panel_options[ind]
+        self._curr_node = self._children_node_options[child_name]
+        self._show_options_menu()
 
-		selection = self._options[ind]
+    def _on_options_done(self, ind):
+        """
+        Callback function for options menu. Displays the children menu
+        for the selected child type, or goes one level up the tree.
 
-		if(selection == go_up):
-			self._show_options_menu()
+        Parameters:
+            ind - the panel index that the user selected
+        """
 
-		self._node = MenuNode(view=self.view, 
-							  scope=selection, 
-							  parent=copy.deepcopy(self._node))
+        # Panel passes -1 in callback if user exits
+        # out of the panel
+        if(ind == -1):
+            return
 
-		self._show_options_menu()
+        # Do not change panel state if user selects
+        # the title
+        if(ind == title_ind):
+            self._show_options_menu()
+            return
 
-	def _on_highlight_done(self, ind):
-		#say menu options when option is highlighted
-		#TODO: only read the body of the function when "read ___" is selected, not highlighted
-		say(str(self._options[ind]))
+        # When the current node is not the global namespace node, then
+        # selecting the read index opens the read scope panel
+        if(ind == read_ind) and self._curr_node.parent:
+            self._show_read_menu()
+            return
 
+        # When the current node is not the global namespace node, then
+        # selecting go_up index changes the current node to its parent
+        # (go up one level in the tree)
+        if (ind == self._get_go_up_ind()) and self._curr_node.parent:
+            self._curr_node = self._curr_node.parent
+            self._show_options_menu()
+            return
 
+        self._selected_child_type = self._panel_options[ind]
+        self._show_children_menu(self._selected_child_type)
+
+    def _on_read_done(self, ind):
+        # Panel passes -1 in callback if user exits
+        # out of the panel
+        if(ind == -1):
+            return
+
+        # Display the current node's options menu
+        if ind == self._get_go_up_ind():
+            self._show_options_menu()
+            return
+
+        show_panel(self._panel_options,
+                   self._on_read_done,
+                   self._on_highlight_done)
+
+    """
+    Utility Member Functions:
+    """
+
+    def _on_highlight_done(self, ind):
+        """
+        Say menu options when option is highlighted
+        """
+        say(self._panel_options[ind])
+
+    def _get_go_up_ind(self):
+        return len(self._panel_options) - 1
+
+    def _get_hierarchy_tree(self):
+        scopes = list()
+        # Convert all symbols in the view to scopes
+        for pair in self.view.symbols():
+            scope = get_scope(self.view, pair[0])
+            # TODO: handle fwd declarations
+            if scope:
+                scopes.append(scope)
+
+        tree = MenuTree(self.view)
+        for scope in scopes:
+            tree.push(scope)
+
+        return tree

@@ -1,9 +1,7 @@
 *.py[doc]
-
-
 *.tokens
-
 *.class
-
 *.java
 *.png
+test_*
+.cr_config

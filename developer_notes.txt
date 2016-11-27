@@ -1,0 +1,8 @@
+This project does not support:
+	* loops, if-statements, etc without open/close brackets
+	* forward declarations
+	* templates
+	* nice do-while loop formating
+	* closing brackets on the same line as opening brackets
+
+To toggle comments and/or line numbers, the key binding must be run before starting CodeReader.py

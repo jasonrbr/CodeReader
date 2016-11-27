@@ -1,0 +1,20 @@
+[
+	{ 
+		"keys": ["Ctrl+c+r"],
+		"command": "code_reader"
+    },
+	{
+		"keys": ["Ctrl+shift+h+m"],
+		"command": "open_help"
+    },
+	{
+		"keys": ["Ctrl+shift+u+7"],
+		"command": "toggle_line_numbers"
+    },
+    {
+        "keys": ["Ctrl+shift+u+8"],
+        "command": "toggle_comments"
+    },
+
+    
+]
