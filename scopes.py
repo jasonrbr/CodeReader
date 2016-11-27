@@ -17,7 +17,7 @@ symbol_list = {r'cout': 'see out', r'cin': 'see in', r'endl': 'endline',
                r'*=': ' times equals ', r'/=': ' divide equals ',
                r'<<': ',', r'>>': ',', r';': ',',
                r'<=': ' less than or equal to ',
-               r'//': 'comment: ', r'/*': 'comment:', r'*/': 'end comment:',
+               r'//': 'comment: ', r'/*': 'comment: ', r'*/': 'end comment: ',
                r'>=': ' greater than or equal to ',
                r'*': ' star ', r'&': ' ampersand ', r'(': ' ', r')': ' ',
                r'|': ' bar ', r'<': ' less than ', r'>': ' greater than '}
