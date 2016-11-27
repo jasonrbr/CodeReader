@@ -43,7 +43,6 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
     
     # for all the lines in the definition
     for line in definition:
-        print(subscope_stack)
 
         line_str = scope._view.substr(line)
         if "}" in line_str:
