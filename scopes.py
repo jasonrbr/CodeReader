@@ -33,6 +33,88 @@ def parse_symbols(input_str):
     parsed = pattern.sub(lambda x: symbol_list[x.group()], input_str)
     return parsed.strip()
 
+# Read the lines in the definition for the scope in a nice way
+def read_definition(scope, definition, panel_options, read_line_numbers):
+    subscope_stack = list()
+
+    single_line_comment = False
+    multi_line_comment_found_begin = False
+    multi_line_comment_found_end = False
+    
+    # for all the lines in the definition
+    for line in definition:
+        print(subscope_stack)
+
+        line_str = scope._view.substr(line)
+        if "}" in line_str:
+            subscope_type = subscope_stack.pop()
+            panel_options.append("exiting " + subscope_type)
+            continue
+
+        if "for" in line_str:
+            subscope_stack.append("for loop")
+        elif "while" in line_str:
+            subscope_stack.append("while loop")
+        elif "if" in line_str and "else" not in line_str:
+            subscope_stack.append("if statement")
+        elif "if" in line_str and "else" in line_str:
+            subscope_stack.append("else if statement")
+        elif "if" not in line_str and "else" in line_str:
+            subscope_stack.append("else statement")
+        # Catchall for other scopes
+        elif "{" in line_str:
+            subscope_stack.append("scope")
+
+        if line_str and not line_str.isspace():
+
+            # Is reading_comments off?
+            if not Config.get('read_comments'):
+
+                # If it's a single line comment
+                if '//' in line_str:
+                    single_line_comment = True
+                    continue
+
+                # Find start of multi line comment
+                if '/*' in line_str:
+                    multi_line_comment_found_begin = True
+                    multi_line_comment_found_end = False
+                    continue
+
+                # If there is more of the multi line comment to be found
+                if (multi_line_comment_found_begin and
+                        not multi_line_comment_found_end):
+                    continue
+
+                # Found the end of the multi line comment!
+                if '*/' in line_str:
+                    multi_line_comment_found_end = True
+                    multi_line_comment_found_begin = False
+                    continue
+
+            # Need to read comments
+            else:
+                # If it's a single line comment
+                if '//' in line_str:
+                    single_line_comment = True
+
+            parsed_string = parse_symbols(line_str)
+
+            if read_line_numbers:
+                row, col = scope._view.rowcol(line.a)
+                parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
+
+            panel_options.append(parsed_string)
+
+            # Check for single line comment
+            if single_line_comment and Config.get('read_comments'):
+                panel_options.append('end comment')
+                single_line_comment = False
+    return panel_options
+
+
+# Reads the lines of code and detect when leaving certain scopes
+#def read_lines(definition):
 
 class Scope():
     def __init__(self, view, name, scope_type=None):
@@ -139,77 +221,11 @@ class Function(Scope):
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
-        subscope_stack = list()
+        returned_panel_options = read_definition(self, definition=definition,
+                                                 panel_options=panel_options,
+                                                 read_line_numbers=read_line_numbers)
 
-        single_line_comment = False
-        multi_line_comment_found_begin = False
-        multi_line_comment_found_end = False
-
-        for line in definition:
-            line_str = self._view.substr(line)
-            if "}" in line_str:
-                subscope_type = subscope_stack.pop()
-                panel_options.append("exiting " + subscope_type)
-                continue
-
-            if "for" in line_str:
-                subscope_stack.append("for loop")
-            elif "while" in line_str:
-                subscope_stack.append("while loop")
-            elif "if" in line_str and "else" not in line_str:
-                subscope_stack.append("if statement")
-            elif "if" in line_str and "else" in line_str:
-                subscope_stack.append("else if statement")
-            elif "if" not in line_str and "else" in line_str:
-                subscope_stack.append("else statement")
-
-            if line_str and not line_str.isspace():
-
-                # Is reading_comments off?
-                if not Config.get('read_comments'):
-
-                    # If it's a single line comment
-                    if '//' in line_str:
-                        single_line_comment = True
-                        continue
-
-                    # Find start of multi line comment
-                    if '/*' in line_str:
-                        multi_line_comment_found_begin = True
-                        multi_line_comment_found_end = False
-                        continue
-
-                    # If there is more of the multi line comment to be found
-                    if (multi_line_comment_found_begin and
-                            not multi_line_comment_found_end):
-                        continue
-
-                    # Found the end of the multi line comment!
-                    if '*/' in line_str:
-                        multi_line_comment_found_end = True
-                        multi_line_comment_found_begin = False
-                        continue
-
-                # Need to read comments
-                else:
-                    # If it's a single line comment
-                    if '//' in line_str:
-                        single_line_comment = True
-
-                parsed_string = parse_symbols(line_str)
-
-                if read_line_numbers:
-                    row, col = self._view.rowcol(line.a)
-                    parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
-
-                panel_options.append(parsed_string)
-
-                # Check for single line comment
-                if single_line_comment and Config.get('read_comments'):
-                    panel_options.append('end comment')
-                    single_line_comment = False
-
-        return panel_options
+        return returned_panel_options
 
 
 
@@ -245,23 +261,19 @@ class Class(Scope):
         panel_options = []
         panel_options.append(self.declaration)
 
+        # init the config file for reading
+        Config.init()
+        read_line_numbers = Config.get('read_line_numbers')
+
         definition = self._view.split_by_newlines(
             sublime.Region(self._body.begin(), self._body.end()))
 
         # TODO: Don't read body of member function (make sub menu?)
-        for line in definition:
-            line_str = self._view.substr(line)
+        returned_panel_options = read_definition(self, definition=definition,
+                                                 panel_options=panel_options,
+                                                 read_line_numbers=read_line_numbers)
 
-            # TODO: toggle comments on or off like for functions
-            # TODO: add 'exiting scope /blah/' logic like above for functions
-            # TODO: toggle line numbers being on or off like for functions
-
-            if line_str and not line_str.isspace():
-                parsed_string = parse_symbols(line_str)
-                panel_options.append(parsed_string)
-
-        return panel_options
-
+        return returned_panel_options
 
 
 # Test
