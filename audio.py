@@ -17,7 +17,9 @@ sys.path.extend(paths)
 def say(input):
     if (sys.platform == 'darwin'):
         import os
-        os.system('say ' + input)
+        # Rate of speech is 250 words per minute
+        # TODO: make this number customizable?
+        os.system('say -r 250 ' + input)
 
     elif (sys.platform == 'win32'):
         # Need to install pywin32 for this to work
