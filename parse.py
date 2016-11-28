@@ -1,6 +1,7 @@
 import sublime
 import sublime_plugin
 from .scopes import Function, Class
+from .audio import say
 
 
 def get_decl_start(view, symbol_start):
@@ -67,7 +68,7 @@ def get_def_start(view, decl_end):
 
     while True:
         if def_start == view.size() - 1:
-            print("Error: missing definition")
+            say("Error: missing definition")
             assert False
 
         def_start += 1
@@ -86,7 +87,7 @@ def get_def_end(view, def_start):
     # first open bracket
     while open_bracket_count != closed_bracket_count:
         if def_end == view.size() - 1:
-            print("Error: missing closing bracket")
+            say("Error: missing closing bracket")
             assert False
 
         def_end += 1
