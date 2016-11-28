@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import sublime
 import sublime_plugin
 
@@ -18,6 +19,7 @@ class Config:
     package_dir = 'CodeReader'
     config_fn = os.path.join(sublime.packages_path(),
                              package_dir, '.cr_config')
+    config_fn = os.path.abspath(config_fn)
 
     @staticmethod
     def init(fn=None, config={}):
@@ -32,19 +34,18 @@ class Config:
         # load the file from memory or default
 
         Config.is_initialized = True
-        if not fn:
-            Config.config = Config.DEFAULT_CONFIG
-            Config._save_config()
-        else:
 
+        if fn:
             Config.config_fn = os.path.join(sublime.packages_path(),
                                             Config.package_dir, fn)
-            Config._load_config()
-            Config.config_fn = fn
+            Config.config_fn = os.path.abspath(Config.config_fn)
+
+        Config._load_config()
 
         # load param config file into our config
         for k in config:
             Config.config[k] = config[k]
+        Config._save_config()
 
     @staticmethod
     def get(param):
@@ -71,7 +72,9 @@ class Config:
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
         except:
-            print("Error reading config file.")
+            e = sys.exc_info()[0]
+            print("Error reading config file ({}). Loading default.".format(e))
+            Config.config = Config.DEFAULT_CONFIG
 
     #  saves config file in memory to file
     #   @param: fn: filename of the config file
@@ -79,10 +82,12 @@ class Config:
     def _save_config():
         print('saving to:', Config.config_fn)
         try:
-            f = open(Config.config_fn, 'w')
+            f = open(Config.config_fn, 'w+')
             f.write(json.dumps(Config.config))
         except:
-            print("Error saving to config file. Write failed.")
+            e = sys.exc_info()[0]
+            print("Error saving to config file. Write failed.",
+                  Config.config_fn, '({})'.format(e))
 
     @staticmethod
     def toggle(param):
@@ -102,6 +107,3 @@ class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
 class ToggleCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         Config.toggle('read_comments')
-
-
-Config.init()
