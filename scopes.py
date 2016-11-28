@@ -132,7 +132,6 @@ class Scope():
 
 class Function(Scope):
     def __init__(self, view, body, declaration):
-        print("Hello world")
         """
         Parameters:
             body - Region containing body/definition excluding open and
