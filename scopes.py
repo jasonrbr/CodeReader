@@ -132,6 +132,7 @@ class Scope():
 
 class Function(Scope):
     def __init__(self, view, body, declaration):
+        print("Hello world")
         """
         Parameters:
             body - Region containing body/definition excluding open and
@@ -147,8 +148,6 @@ class Function(Scope):
         super().__init__(view,
                          func_name,
                          func_scope_type)
-
-        self._panel_options = self._get_panel_options()
 
     def __eq__(self, other):
         return (self.declaration == other.declaration and
@@ -171,7 +170,7 @@ class Function(Scope):
 
     @property
     def panel_options(self):
-        return self._panel_options
+        return self._get_panel_options()
 
     @property
     def params(self):
