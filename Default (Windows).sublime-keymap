@@ -1,6 +1,6 @@
 [
 	{ 
-		"keys": ["Ctrl+c+r"],
+		"keys": ["Ctrl+shift+c+r"],
 		"command": "code_reader"
     },
 	{
