@@ -1,10 +1,10 @@
 [
 	{ 
-		"keys": ["Ctrl+shift+c+r"],
+		"keys": ["Ctrl+shift+c"],
 		"command": "code_reader"
     },
 	{
-		"keys": ["Ctrl+shift+h+m"],
+		"keys": ["Ctrl+shift+h"],
 		"command": "open_help"
     },
 	{
