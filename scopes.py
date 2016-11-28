@@ -148,8 +148,6 @@ class Function(Scope):
                          func_name,
                          func_scope_type)
 
-        self._panel_options = self._get_panel_options()
-
     def __eq__(self, other):
         return (self.declaration == other.declaration and
                 self.params == other.params)
@@ -171,7 +169,7 @@ class Function(Scope):
 
     @property
     def panel_options(self):
-        return self._panel_options
+        return self._get_panel_options()
 
     @property
     def params(self):
