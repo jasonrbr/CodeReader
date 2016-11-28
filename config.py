@@ -19,6 +19,7 @@ class Config:
     package_dir = 'CodeReader'
     config_fn = os.path.join(sublime.packages_path(),
                              package_dir, '.cr_config')
+    config_fn = os.path.abspath(config_fn)
 
     @staticmethod
     def init(fn=None, config={}):
@@ -37,6 +38,7 @@ class Config:
         if fn:
             Config.config_fn = os.path.join(sublime.packages_path(),
                                             Config.package_dir, fn)
+            Config.config_fn = os.path.abspath(Config.config_fn)
 
         Config._load_config()
 
@@ -84,7 +86,8 @@ class Config:
             f.write(json.dumps(Config.config))
         except:
             e = sys.exc_info()[0]
-            print("Error saving to config file. Write failed.", Config.config_fn, '({})'.format(e))
+            print("Error saving to config file. Write failed.",
+                  Config.config_fn, '({})'.format(e))
 
     @staticmethod
     def toggle(param):
@@ -104,6 +107,3 @@ class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
 class ToggleCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         Config.toggle('read_comments')
-
-
-Config.init()
