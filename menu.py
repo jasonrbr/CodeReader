@@ -18,6 +18,7 @@ class MenuNode():
                    list of menu nodes. These nodes are the
                    children of this node in the hierarchy tree
     """
+
     def __init__(self, view, scope, parent=None):
         self._view = view
         self._scope = scope
@@ -25,7 +26,10 @@ class MenuNode():
         self._parent = parent
         self._children = {
             class_scope_type: list(),
-            func_scope_type: list()}
+            func_scope_type: list(),
+            library_scope_type: list()}
+
+        # TODO: do something with the _children.library_scope_type
 
     def add_child(self, node):
         """
@@ -37,7 +41,8 @@ class MenuNode():
                    of this menu node's scope region
         """
         assert (node._scope.type == func_scope_type or
-                node._scope.type == class_scope_type)
+                node._scope.type == class_scope_type or
+                node._scope.type == library_scope_type)
         self._children[node._scope.type].append(node)
 
     def get_children(self, child_type=None):

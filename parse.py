@@ -111,6 +111,7 @@ def get_definition(view, declaration_reg):
 def get_scope(view, symbol_reg):
     is_fwd_decl, declaration_reg = get_declaration(view, symbol_reg)
 
+    # todo get this to recognize libraries as a scope
     if is_fwd_decl:
         return None
 

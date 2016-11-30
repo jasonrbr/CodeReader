@@ -220,6 +220,18 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             if scope:
                 scopes.append(scope)
 
+        # Look for libraries in view to make into scopes
+        view_rgn = sublime.Region(0, len(self.view))
+        lib_pattern = '\#include \<(\w+)\>'
+        for rgn in self.view.split_by_newlines(view_rgn):
+            txt = self.view.substr(rgn)
+            m = re.match(lib_pattern, txt)
+            if m:
+                library_name = m.group(1)
+                print(library_name)
+                scopes.append(Library(self.view, library_name, rgn))
+                # TODO do something with this now
+
         tree = MenuTree(self.view)
         for scope in scopes:
             tree.push(scope)

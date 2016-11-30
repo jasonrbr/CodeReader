@@ -7,6 +7,7 @@ from .config import *
 func_scope_type = 'functions'
 other_scope_type = 'other'
 class_scope_type = 'classes'
+library_scope_type = 'library'
 
 
 # raw symbols and their translations when passing to say
@@ -128,6 +129,26 @@ class Scope():
     @property
     def name(self):
         return self._name
+
+
+class Library(Scope):
+    def __init__(self, view, name, declaration):
+        """
+        Parameters:
+            name - name of the library being included
+            declaration - Region containing the declaration
+                            (ie., "#include <...>")
+        """
+        self._name = name
+        self._declaration = declaration
+
+        super().__init__(view,
+                         name,
+                         library_scope_type)
+
+    @property
+    def declaration_region(self):
+        return self._declaration
 
 
 class Function(Scope):
