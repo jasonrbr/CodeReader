@@ -224,6 +224,10 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
         view_rgn = sublime.Region(0, len(self.view))
         lib_pattern = '\#include \<(\w+)\>'
         for rgn in self.view.split_by_newlines(view_rgn):
+            # if rgn contained in any subscope regions...
+            if False:
+                continue
+
             txt = self.view.substr(rgn)
             m = re.match(lib_pattern, txt)
             if m:
