@@ -230,7 +230,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
                 library_name = m.group(1)
                 print(library_name)
                 scopes.append(Library(self.view, library_name, rgn))
-                # TODO do something with this now
+                # TODO this is subscope agnostic at the moment
 
         tree = MenuTree(self.view)
         for scope in scopes:
