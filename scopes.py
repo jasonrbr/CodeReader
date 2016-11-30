@@ -45,6 +45,7 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
     for line in definition:
 
         line_str = scope._view.substr(line)
+
         if "}" in line_str:
             subscope_type = subscope_stack.pop()
             panel_options.append("exiting " + subscope_type)
@@ -80,16 +81,18 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
                     multi_line_comment_found_end = False
                     continue
 
-                # If there is more of the multi line comment to be found
-                if (multi_line_comment_found_begin and
-                        not multi_line_comment_found_end):
-                    continue
-
                 # Found the end of the multi line comment!
                 if '*/' in line_str:
                     multi_line_comment_found_end = True
                     multi_line_comment_found_begin = False
                     continue
+
+                # If there is more of the multi line comment to be found
+                if (multi_line_comment_found_begin and
+                        not multi_line_comment_found_end):
+                    continue
+
+
 
             # Need to read comments
             else:
@@ -271,14 +274,3 @@ class Class(Scope):
                                                  read_line_numbers=read_line_numbers)
 
         return returned_panel_options
-
-
-# Test
-class ScopeCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        func = Function(self.view, sublime.Region(14, 67),
-                        sublime.Region(1, 12))
-
-        print(self.view.substr(func._declaration))
-        print(self.view.substr(func._body))
-        print(func.panel_options)
