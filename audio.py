@@ -19,7 +19,7 @@ def say(input):
         import os
         # Rate of speech is 250 words per minute
         # TODO: make this number customizable?
-        os.system('say -r 260 ' + input)
+        os.system('say -r 260 -v Karen ' + input)
 
     elif (sys.platform == 'win32'):
         # Need to install pywin32 for this to work
