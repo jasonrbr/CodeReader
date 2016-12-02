@@ -28,6 +28,7 @@ def say(input):
         # E.g., pywin32-220.win-amd64-py3.4.exe if you are running python 3.4
         import win32com.client
         speaker = win32com.client.Dispatch("SAPI.SpVoice")
+        speaker.Rate = 5 # edit for rate of speech
         speaker.Speak(input)
 
     else:
