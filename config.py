@@ -3,7 +3,6 @@ import os
 import sys
 import sublime
 import sublime_plugin
-from .audio import say
 
 
 class Config:
@@ -113,7 +112,8 @@ class Config:
         speed = Config.get('speed')
         speed -= 25
         if (speed < 100):
-            say("speed is too slow")
+            print("Error: speed is too slow. Cannot decrease anymore.")
+            return
         Config.set('speed', speed)
 
 
