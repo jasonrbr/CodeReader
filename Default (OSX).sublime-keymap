@@ -15,4 +15,12 @@
         "keys": ["super+shift+u+8"],
         "command": "toggle_comments"
     },
+    {
+        "keys": ["super+shift+up"],
+        "command": "increase_speed"
+    },
+    {
+        "keys": ["super+shift+down"],
+        "command": "decrease_speed"
+    },
 ]

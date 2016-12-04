@@ -3,6 +3,7 @@ import os
 import sys
 import sublime
 import sublime_plugin
+from .audio import say
 
 
 class Config:
@@ -13,7 +14,7 @@ class Config:
     DEFAULT_CONFIG = {
         'read_comments': True,
         'read_line_numbers': True,
-
+        'speed': 250
     }
     config = {}
     package_dir = 'CodeReader'
@@ -53,6 +54,8 @@ class Config:
         Returns the value set for the given parameter in the config file.
         Will return None if the value is unset.
         '''
+        print('param: ', param)
+        print('config: ', Config.config)
         if param in Config.config:
             return Config.config[param]
         else:
@@ -61,13 +64,13 @@ class Config:
     @staticmethod
     def set(param, value):
         Config.config[param] = value
+        print('config is now: ', Config.config)
         Config._save_config()
 
     # loads config file into memory
     #   @param: fn: filename of the config file
     @staticmethod
     def _load_config():
-        print('loading from:', Config.config_fn)
         try:
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
@@ -98,6 +101,21 @@ class Config:
     def _tostring():
         return str(Config.config)
 
+    @staticmethod
+    def increase_speed():
+        speed = Config.get('speed')
+        print('speed: ', speed)
+        speed += 25
+        Config.set('speed', speed)
+
+    @staticmethod
+    def decrease_speed():
+        speed = Config.get('speed')
+        speed -= 25
+        if (speed < 100):
+            say("speed is too slow")
+        Config.set('speed', speed)
+
 
 class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -107,3 +125,13 @@ class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
 class ToggleCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         Config.toggle('read_comments')
+
+
+class IncreaseSpeedCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        Config.increase_speed()
+
+
+class DecreaseSpeedCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        Config.decrease_speed()
