@@ -115,8 +115,7 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
                 if '//' in line_str:
                     single_line_comment = True
 
-            parsed_string = temp_container_parsing(line_str)
-            parsed_string = parse_symbols(parsed_string)
+            parsed_string = parse_symbols(line_str)
 
             if read_line_numbers:
                 row, col = scope._view.rowcol(line.a)
