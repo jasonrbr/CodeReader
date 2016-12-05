@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"speed": 325, "read_line_numbers": true, "read_comments": true}
+=======
+{"read_comments": true, "speed": 300, "read_line_numbers": true}
+>>>>>>> container-reading
