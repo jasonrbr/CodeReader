@@ -153,6 +153,40 @@ class Library(Scope):
     def declaration_region(self):
         return self._declaration
 
+    @property
+    def panel_options(self):
+        return self._get_panel_options()
+
+    def _get_panel_options(self):
+        panel_options = []
+
+        # init the config file for reading
+        Config.init()
+        read_line_numbers = Config.get('read_line_numbers')
+
+        decl_str = self.declaration
+
+        # The declaration is the first panel option
+        # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.params:
+            decl_str += ' and' + self.params
+
+        if read_line_numbers:
+            row, col = self._view.rowcol(self._declaration.a)
+            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
+
+        panel_options.append(decl_str)
+
+        definition = self._view.split_by_newlines(
+            sublime.Region(self._body.begin(), self._body.end()))
+
+        returned_panel_options = read_definition(self, definition=definition,
+                                                 panel_options=panel_options,
+                                                 read_line_numbers=read_line_numbers)
+
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        # TODO make this make sense for libraries
+        return returned_panel_options
 
 class Function(Scope):
     def __init__(self, view, body, declaration):
