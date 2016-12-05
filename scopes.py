@@ -31,14 +31,14 @@ symbols = sorted(symbol_list.keys(), key=len, reverse=True)
 # separate from symbol list for now to lower design complexity
 def temp_container_parsing(input_str):
     pattern = re.compile('(\w+)\s?\<\s?(\w+)\>')
-    m = re.search(pattern, input_str)
-    original_match = m.group(0)
-    container_type = m.group(1)
-    template_type = m.group(2)
-
-    repl = '{} of type {}'.format(container_type, template_type)
-    parsed = re.sub(original_match, repl, input_str)
-    return parsed
+    while re.search(pattern, input_str):
+        m = re.search(pattern, input_str)
+        original_match = m.group(0)
+        container_type = m.group(1)
+        template_type = m.group(2)
+        repl = '{} of type {}'.format(container_type, template_type)
+        input_str = re.sub(original_match, repl, input_str)
+    return input_str
 
 # Returns a stripped string with symbols mapped to their
 # appropriate English words
