@@ -1,9 +1,10 @@
 This project does not support:
 	* loops, if-statements, etc without open/close brackets
 	* forward declarations
-	* templates
+	* template declarations
 	* nice do-while loop formating
 	* closing brackets on the same line as opening brackets
-	* < and > need to have one single space on either side if used as operators
+	* < and > without one single space on either side if used as operators
+	* template containers with more than one template argument
 
 To toggle comments and/or line numbers, the key binding must be run before starting CodeReader.py
