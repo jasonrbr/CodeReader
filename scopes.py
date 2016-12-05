@@ -54,7 +54,7 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
     single_line_comment = False
     multi_line_comment_found_begin = False
     multi_line_comment_found_end = False
-    
+
     # for all the lines in the definition
     for line in definition:
 
@@ -114,7 +114,8 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
                 if '//' in line_str:
                     single_line_comment = True
 
-            parsed_string = parse_symbols(line_str)
+            parsed_string = temp_container_parsing(line_str)
+            parsed_string = parse_symbols(parsed_string)
 
             if read_line_numbers:
                 row, col = scope._view.rowcol(line.a)
