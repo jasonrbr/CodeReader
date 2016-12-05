@@ -45,6 +45,7 @@ def temp_container_parsing(input_str):
 def parse_symbols(input_str):
     pattern = re.compile('|'.join(re.escape(key) for key in symbols))
     parsed = pattern.sub(lambda x: symbol_list[x.group()], input_str)
+    parsed = temp_container_parsing(parsed) # separate parsing for templated containers
     return parsed.strip()
 
 # Read the lines in the definition for the scope in a nice way
