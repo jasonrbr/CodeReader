@@ -53,8 +53,6 @@ class Config:
         Returns the value set for the given parameter in the config file.
         Will return None if the value is unset.
         '''
-        print('param: ', param)
-        print('config: ', Config.config)
         if param in Config.config:
             return Config.config[param]
         else:
@@ -63,7 +61,6 @@ class Config:
     @staticmethod
     def set(param, value):
         Config.config[param] = value
-        print('config is now: ', Config.config)
         Config._save_config()
 
     # loads config file into memory
@@ -88,7 +85,6 @@ class Config:
     #   @param: fn: filename of the config file
     @staticmethod
     def _save_config():
-        print('saving to:', Config.config_fn)
         f = None
         try:
             f = open(Config.config_fn, 'w')
@@ -116,8 +112,10 @@ class Config:
             Config.init()
 
         speed = Config.get('speed')
-        print('speed: ', speed)
         speed += 25
+        if (speed > 400):
+            print("Error: speed is too fast. Cannot increase anymore.")
+            return
         Config.set('speed', speed)
 
     @staticmethod
@@ -127,7 +125,7 @@ class Config:
 
         speed = Config.get('speed')
         speed -= 25
-        if (speed < 100):
+        if (speed < 150):
             print("Error: speed is too slow. Cannot decrease anymore.")
             return
         Config.set('speed', speed)

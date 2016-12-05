@@ -16,11 +16,11 @@
         "command": "toggle_comments"
     },
     {
-        "keys": ["Ctrl+shift+up"],
+        "keys": ["Ctrl+shift+u+9"],
         "command": "increase_speed"
     },
     {
-        "keys": ["Ctrl+shift+down"],
+        "keys": ["Ctrl+shift+u+0"],
         "command": "decrease_speed"
     },
 

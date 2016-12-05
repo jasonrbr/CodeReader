@@ -229,7 +229,6 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             m = re.match(lib_pattern, txt)
             if m:
                 library_name = m.group(1)
-                print(library_name)
                 scopes.append(Library(self.view, library_name, rgn))
                 # TODO this is subscope agnostic at the moment
 

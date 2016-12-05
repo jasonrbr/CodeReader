@@ -16,12 +16,12 @@ sys.path.extend(paths)
 
 # Perform text to speech on input with the corresponding modules
 # based on the operating system
-def say(input, speed):
+def say(input):
     if (sys.platform == 'darwin'):
         import os
         # Get user defined speed from config file
         speed = Config.get('speed')
-        os.system('say -r' + speed + input)
+        os.system('say -r ' + str(speed) + ' ' + input)
 
     elif (sys.platform == 'win32'):
         # Need to install pywin32 for this to work
