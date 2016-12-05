@@ -21,7 +21,7 @@ def say(input):
         import os
         # Get user defined speed from config file
         speed = Config.get('speed')
-        os.system('say -r ' + str(speed) + ' ' + input)
+        os.system('say -v Ava -r ' + str(speed) + ' ' + input)
 
     elif (sys.platform == 'win32'):
         # Need to install pywin32 for this to work
