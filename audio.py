@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import os
+from .config import *
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -12,14 +13,15 @@ paths = [
 
 sys.path.extend(paths)
 
+
 # Perform text to speech on input with the corresponding modules
 # based on the operating system
 def say(input):
     if (sys.platform == 'darwin'):
         import os
-        # Rate of speech is 250 words per minute
-        # TODO: make this number customizable?
-        os.system('say -r 260 ' + input)
+        # Get user defined speed from config file
+        speed = Config.get('speed')
+        os.system('say -r ' + str(speed) + ' ' + input)
 
     elif (sys.platform == 'win32'):
         # Need to install pywin32 for this to work

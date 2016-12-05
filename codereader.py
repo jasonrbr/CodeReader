@@ -40,6 +40,7 @@ def show_panel(options, on_done, on_hilight=None):
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
+        Config.init() # initilze configuration before the rest of run
         self._curr_node = self._get_hierarchy_tree().root
         self._show_options_menu()
 
@@ -228,7 +229,6 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             m = re.match(lib_pattern, txt)
             if m:
                 library_name = m.group(1)
-                print(library_name)
                 scopes.append(Library(self.view, library_name, rgn))
                 # TODO this is subscope agnostic at the moment
 
