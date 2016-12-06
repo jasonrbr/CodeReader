@@ -4,8 +4,6 @@ from collections import deque
 from .scopes import *
 from .parse import get_sub_scopes
 
-global_namespace = 'global namespace'
-
 
 class MenuNode():
     """
