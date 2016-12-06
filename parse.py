@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-from .scopes import Function, Class
+from .scopes import *
 from .audio import say
 
 
@@ -27,7 +27,7 @@ def get_decl_start(view, symbol_start):
                 symbol_start += 1
                 break
             else:
-                say("Error: missing declaration")
+                say('Error: missing declaration')
                 assert False
 
         # Triggered when first whitespace character is found
@@ -55,7 +55,7 @@ def get_decl_end(view, symbol_end):
     """
     while True:
         if symbol_end == view.size() - 1:
-            say("Error: missing open bracket or semicolon")
+            say('Error: missing open bracket or semicolon')
             assert False
 
         symbol_end += 1
@@ -83,7 +83,12 @@ def get_declaration(view, symbol_reg):
 
     is_fwd_decl, decl_end = get_decl_end(view, symbol_reg.end())
 
-    return is_fwd_decl, sublime.Region(decl_start, decl_end)
+    if is_fwd_decl:
+        say('Error: forward declaration for {} ignored'.format(
+            view.substr(symbol_reg)))
+        return None
+
+    return sublime.Region(decl_start, decl_end)
 
 
 def get_def_start(view, decl_end):
@@ -165,10 +170,10 @@ def get_scope(view, symbol_reg):
         view - sublime view
         symbol_reg - the symbol region
     """
-    is_fwd_decl, declaration_reg = get_declaration(view, symbol_reg)
+    declaration_reg = get_declaration(view, symbol_reg)
 
     # todo get this to recognize libraries as a scope(?)
-    if is_fwd_decl:
+    if not declaration_reg:
         return None
 
     definition_reg = get_definition(view, declaration_reg)
@@ -207,14 +212,35 @@ def get_sub_scopes(view, region):
                     symbol_reg.end() < subscopes[-1].definition_region.end())):
             continue
 
-        subscopes.append(get_scope(view, symbol_reg))
+        subscope = get_scope(view, symbol_reg)
+
+        # Do nothing for fwd declarations
+        if subscope:
+            subscopes.append(subscope)
 
     return subscopes
 
 
 class ParseCommand(sublime_plugin.TextCommand):
+    def print_subscopes(self, scope, region=None):
+        if scope.name != 'global namespace':
+            region = sublime.Region(scope.definition_region.begin(),
+                                    scope.definition_region.end())
+
+        subscopes = get_sub_scopes(self.view, region)
+
+        if not subscopes:
+            print("{} has no children".format(scope.name))
+            return
+
+        print("{}'s children:".format(scope.name))
+        for subscope in subscopes:
+            print(subscope.name)
+
+        for subscope in subscopes:
+            self.print_subscopes(scope=subscope)
+
     def run(self, edit):
-        classAreg = sublime.Region(9, 88)
-        subscopes = get_sub_scopes(self.view, classAreg)
-        for scope in subscopes:
-            print(scope.declaration)
+        global_namespace_reg = sublime.Region(0, self.view.size())
+        global_scope = Scope(view=self.view, name='global namespace')
+        self.print_subscopes(scope=global_scope, region=global_namespace_reg)
