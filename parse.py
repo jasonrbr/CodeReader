@@ -19,7 +19,7 @@ def get_decl_start(view, symbol_start):
     is_whitespace = True
     while True:
         if start_decl == 0:
-            print("Error: missing declaration")
+            say("Error: missing declaration")
             assert False
 
         start_decl -= 1
