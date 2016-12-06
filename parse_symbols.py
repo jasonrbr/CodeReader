@@ -39,5 +39,5 @@ def parse_symbols(input_str):
     pattern = re.compile('|'.join(re.escape(key) for key in symbols))
     parsed = pattern.sub(lambda x: symbol_list[x.group()], input_str)
     # separate parsing for templated containers
-    return parsed.strip()
     parsed = temp_container_parsing(parsed)
+    return parsed.strip()

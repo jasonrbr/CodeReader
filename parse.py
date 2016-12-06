@@ -179,9 +179,9 @@ def get_scope(view, symbol_reg):
     definition_reg = get_definition(view, declaration_reg)
 
     if view.substr(declaration_reg).split()[0] == 'class':
-        scope = Class(view, definition_reg, declaration_reg)
+        scope = Class(view, declaration_reg, definition_reg)
     else:
-        scope = Function(view, definition_reg, declaration_reg)
+        scope = Function(view, declaration_reg, definition_reg)
 
     return scope
 
