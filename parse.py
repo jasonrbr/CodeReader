@@ -188,12 +188,12 @@ def get_scope(view, symbol_reg):
 
 def get_sub_scopes(view, region):
     """
-    Returns the region associated with the
-    symbol without converting it to a scope
+    Returns the top-level subscopes of the given
+    region
 
     Parameters:
         view - sublime view
-        symbol_reg - the symbol region
+        region - region in which to look for scopes
     """
     subscopes = list()
 
