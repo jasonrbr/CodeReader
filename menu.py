@@ -2,7 +2,7 @@ import sublime
 import sublime_plugin
 from collections import deque
 from .scopes import *
-from .parse import *
+from .parse import get_sub_scopes
 
 global_namespace = 'global namespace'
 
@@ -24,10 +24,8 @@ class MenuNode():
         self._scope = scope
 
         self._parent = parent
-        self._children = {
-            class_scope_type: list(),
-            func_scope_type: list(),
-            library_scope_type: list()}
+        # Dictonary of scope types to a list of nodes of that type
+        self._children = {scope_type: list() for scope_type in scope_types}
 
         # TODO: do something with the _children.library_scope_type
 
@@ -40,10 +38,8 @@ class MenuNode():
             node - MenuNode whose scope region is within the region
                    of this menu node's scope region
         """
-        assert (node._scope.type == func_scope_type or
-                node._scope.type == class_scope_type or
-                node._scope.type == library_scope_type)
-        self._children[node._scope.type].append(node)
+        assert is_valid_type(node.scope.type)
+        self._children[node.scope.type].append(node)
 
     def get_children(self, child_type=None):
         """
@@ -55,17 +51,22 @@ class MenuNode():
             child_type - indicates which node list to return.
                          If None, returns available scope types.
         """
-        if (child_type and child_type in self._children and
+
+        # Checks whether the child_type is valid and if any children
+        # of this type exists
+        if (child_type and (child_type in self._children) and
                 len(self._children[child_type])):
             return self._children[child_type]
 
+        # Returns a list of all available children types.
+        # Does nothing if scope contains no children types.
         if not child_type:
-            children = list()
+            children_types = list()
             for key, value in self._children.items():
                 if len(value):
-                    children.append(key)
-            if len(children):
-                return children
+                    children_types.append(key)
+            if len(children_types):
+                return children_types
 
         return None
 
@@ -81,112 +82,63 @@ class MenuNode():
     def scope(self):
         return self._scope
 
-
-def generate_global_node(view):
-    global_scope = Scope(view=view,
-                         name=global_namespace)
-    global_node = MenuNode(view=view,
-                           scope=global_scope)
-    return global_node
-
-
-class MenuTree():
-    def __init__(self, view):
-        self._view = view
-        self._root = generate_global_node(self._view)
-
-    def push(self, new_scope):
-        stack = list()
-        queue = deque()
-
-        queue.append(self._root)
-
-        while queue:
-            node = queue.popleft()
-
-            # Functions can't have children
-            if node._scope.type == func_scope_type:
-                continue
-
-            stack.append(node)
-
-            class_children = node.get_children(class_scope_type)
-
-            if not class_children:
-                continue
-
-            for node in class_children:
-                queue.append(node)
-
-        insert_node = None
-        while stack:
-            node = stack.pop()
-
-            if node is self._root:
-                insert_node = node
-                break
-
-            assert node.scope.type == class_scope_type
-
-            node_reg = node.scope.definition_region
-            new_scope_reg = new_scope.declaration_region
-
-            if (new_scope_reg.begin() >= node_reg.begin() and
-                    node_reg.end() >= new_scope_reg.end()):
-
-                insert_node = node
-                break
-
-        assert insert_node
-
-        child_node = MenuNode(view=self._view,
-                              scope=new_scope,
-                              parent=insert_node)
-
-        insert_node.add_child(child_node)
-
-    def _make_string(self, prefix, node):
-        str_ = "{}{}\n".format(prefix, node.scope.name)
-
-        children = list()
-
-        funcs = node.get_children(func_scope_type)
-        if funcs:
-            children.extend(funcs)
-        classes = node.get_children(class_scope_type)
-        if classes:
-            children.extend(classes)
-
-        if children:
-            prefix += '\t'
-            for node in children:
-                str_ += self._make_string(prefix, node)
-
-        return str_
-
-    def __str__(self):
-        prefix = ""
-        return self._make_string(prefix, self._root)
-
     @property
-    def root(self):
-        return self._root
+    def is_global_node(self):
+        return self._parent is None
+
+
+def get_hierarchy_tree(view, node=None):
+    if not node:
+        node = MenuNode(view=view,
+                        scope=GlobalScope(view))
+
+    # Base case: node is of scope type that cannot
+    # have children
+    if not node.scope.can_have_subscopes:
+        return node
+
+    subscopes = get_sub_scopes(view, node.scope.definition_region)
+
+    # Base case: node has no children
+    if not subscopes:
+        return node
+
+    # Add children nodes
+    for subscope in subscopes:
+        child_node = get_hierarchy_tree(view, MenuNode(view,
+                                                       subscope,
+                                                       parent=node))
+        node.add_child(child_node)
+
+    return node
 
 
 # Test
 class MenuCommand(sublime_plugin.TextCommand):
+    # Preorder traversal
+    def print_hierarchy(self, node, prefix=""):
+        print(prefix + node.name)
+
+        # Base case: node is of scope type that cannot
+        # have children
+        if not node.scope.can_have_subscopes:
+            return
+
+        # Base case: node has no children
+        available_scope_types = node.get_children()
+        if not available_scope_types:
+            return
+
+        for scope_type in available_scope_types:
+            children = node.get_children(scope_type)
+            for child_node in children:
+                self.print_hierarchy(node=child_node, prefix=(prefix + "\t"))
+
     def run(self, edit):
-        scopes = list()
-        # Convert all symbols in the view to
-        # scopes
-        for pair in self.view.symbols():
-            scope = get_scope(self.view, pair[0])
-            # TODO: handle fwd declarations
-            if scope:
-                scopes.append(scope)
+        root = get_hierarchy_tree(self.view)
+        self.print_hierarchy(node=root)
+        # print(root.scope.definition_region)
+        # print(root.scope.name)
 
-        tree = MenuTree(self.view)
-        for scope in scopes:
-            tree.push(scope)
+        # print(root.get_children())
 
-        print(str(tree))
