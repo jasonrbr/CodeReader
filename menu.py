@@ -40,9 +40,10 @@ class MenuNode():
             node - MenuNode whose scope region is within the region
                    of this menu node's scope region
         """
-        assert (node._scope.type == func_scope_type or
-                node._scope.type == class_scope_type or
-                node._scope.type == library_scope_type)
+        assert(node._scope.type == func_scope_type or
+               node._scope.type == class_scope_type or
+               node._scope.type == library_scope_type)
+
         self._children[node._scope.type].append(node)
 
     def get_children(self, child_type=None):
@@ -55,17 +56,22 @@ class MenuNode():
             child_type - indicates which node list to return.
                          If None, returns available scope types.
         """
-        if (child_type and child_type in self._children and
+
+        # Checks whether the child_type is valid and if any children
+        # of this type exists
+        if (child_type and (child_type in self._children) and
                 len(self._children[child_type])):
             return self._children[child_type]
 
+        # Returns a list of all available children types.
+        # Does nothing if scope contains no children types.
         if not child_type:
-            children = list()
+            children_types = list()
             for key, value in self._children.items():
                 if len(value):
-                    children.append(key)
-            if len(children):
-                return children
+                    children_types.append(key)
+            if len(children_types):
+                return children_types
 
         return None
 
@@ -80,6 +86,10 @@ class MenuNode():
     @property
     def scope(self):
         return self._scope
+
+    @property
+    def is_global_node(self):
+        return self._parent is None
 
 
 def generate_global_node(view):
