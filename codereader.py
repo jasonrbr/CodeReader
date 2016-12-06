@@ -223,7 +223,7 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
         # Look for libraries in view to make into scopes
         view_rgn = sublime.Region(0, len(self.view))
-        lib_pattern = '\#include \<(\w+)\>'
+        lib_pattern = '\#include (\<(\w+)\>|\"\w+\.\w+\")'
         for rgn in self.view.split_by_newlines(view_rgn):
             # if rgn contained in any subscope regions...
             if False:
@@ -232,9 +232,12 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             txt = self.view.substr(rgn)
             m = re.match(lib_pattern, txt)
             if m:
+                # grabs library name and strips off special characters
                 library_name = m.group(1)
+                library_name = re.sub('[\<\>\"]', '', library_name)
+
                 scopes.append(Library(self.view, library_name, rgn))
-                # TODO this is subscope agnostic at the moment
+                # NOTE this is subscope agnostic at the moment
 
         tree = MenuTree(self.view)
         for scope in scopes:
