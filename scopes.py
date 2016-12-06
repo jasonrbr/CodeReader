@@ -12,7 +12,6 @@ scope_types = {func_scope_type, class_scope_type, library_scope_type}
 
 
 def is_valid_type(scope_type):
-    print(type(scope_type))
     return scope_type in scope_types
 
 
