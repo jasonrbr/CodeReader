@@ -7,7 +7,7 @@ from .scopes import *
 
 # Menu option menu strings:
 go_up_prfx = 'go up to scope, '
-read_prfx = 'reed '  # Note: reed not read for proper pronunciation
+read_prfx = 'read '  # Note: reed not read for proper pronunciation
 scope_prfx = 'scope '
 
 # Child option menu strings:
