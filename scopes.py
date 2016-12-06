@@ -105,8 +105,12 @@ class Scope():
     def name(self):
         return self._name
 
+    @property
+    def can_have_subscopes(self):
+        return self._scope_type == class_scope_type
 
-class GlobalScope():
+
+class GlobalScope(Scope):
     def __init__(self, view):
         super().__init__(view, global_scope_name)
         self._body_reg = sublime.Region(0, self._view.size())
