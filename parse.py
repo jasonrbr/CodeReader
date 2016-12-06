@@ -14,48 +14,71 @@ def get_decl_start(view, symbol_start):
         symbol_start - the start point of the symbol
                        within the view
     """
-    start_decl = symbol_start
-
     is_whitespace = True
+
     while True:
-        if start_decl == 0:
-            print("Error: missing declaration")
-            assert False
+        symbol_start -= 1
 
-        start_decl -= 1
+        # If the start of the file has been reached and the last
+        # character viewed wasn't whitespace, the declaration has
+        # been found. Otherwise, there is no valid declaration.
+        if symbol_start < 0:
+            if not is_whitespace:
+                symbol_start += 1
+                break
+            else:
+                say("Error: missing declaration")
+                assert False
 
-        if is_whitespace and not view.substr(start_decl).isspace():
+        # Triggered when first whitespace character is found
+        if is_whitespace and not view.substr(symbol_start).isspace():
             is_whitespace = False
 
-        if not is_whitespace and view.substr(start_decl).isspace():
-            start_decl += 1
+        # Triggered when start of declaration has been found
+        elif not is_whitespace and view.substr(symbol_start).isspace():
+            symbol_start += 1
             break
 
-    return start_decl
+    return symbol_start
 
 
 def get_decl_end(view, symbol_end):
-    end_decl = symbol_end
+    """
+    Returns the end point of the symbol's declaration
+    in the view. A declaration ends at the first ';' or
+    '{' after the symbol's end
 
-    # Find first open bracket or ';'
+    Parameters:
+        view - sublime view
+        symbol_end - the end point of the symbol
+                     within the view
+    """
     while True:
-        if end_decl == view.size() - 1:
-            print("Error: missing open bracket or semicolon")
+        if symbol_end == view.size() - 1:
+            say("Error: missing open bracket or semicolon")
             assert False
 
-        end_decl += 1
+        symbol_end += 1
 
         # If a semicolon is found before an open bracket,
         # this symbol is associated with a forward
         # declaration.
-        if view.substr(end_decl) == ';':
-            return True, end_decl - 1
+        if view.substr(symbol_end) == ';':
+            return True, symbol_end - 1
 
-        if view.substr(end_decl) == '{':
-            return False, end_decl - 1
+        if view.substr(symbol_end) == '{':
+            return False, symbol_end - 1
 
 
 def get_declaration(view, symbol_reg):
+    """
+    Returns declaration associated with the symbol and
+    whether it is a forward declaration.
+
+    Parameters:
+        view - sublime view
+        symbol_reg - the symbol's region
+    """
     decl_start = get_decl_start(view, symbol_reg.begin())
 
     is_fwd_decl, decl_end = get_decl_end(view, symbol_reg.end())
@@ -64,8 +87,17 @@ def get_declaration(view, symbol_reg):
 
 
 def get_def_start(view, decl_end):
+    """
+    Returns the start of the definition associated with the
+    declaration.
+
+    Parameters:
+        view - sublime view
+        decl_end - the end region of the declaration
+    """
     def_start = decl_end
 
+    # Find point immediately after '{'
     while True:
         if def_start == view.size() - 1:
             say("Error: missing definition")
@@ -78,6 +110,14 @@ def get_def_start(view, decl_end):
 
 
 def get_def_end(view, def_start):
+    """
+    Returns the end of the definition.
+
+    Parameters:
+        view - sublime view
+        def_start - the start of the definition
+    """
+
     def_end = def_start
 
     open_bracket_count = 1
@@ -101,6 +141,14 @@ def get_def_end(view, def_start):
 
 
 def get_definition(view, declaration_reg):
+    """
+    Returns the definition associated with the
+    declaration.
+
+    Parameters:
+        view - sublime view
+        declaration_reg - the declaration region
+    """
     def_start = get_def_start(view, declaration_reg.end())
 
     def_end = get_def_end(view, def_start)
@@ -109,9 +157,17 @@ def get_definition(view, declaration_reg):
 
 
 def get_scope(view, symbol_reg):
+    """
+    Returns the scope associated with the
+    symbol.
+
+    Parameters:
+        view - sublime view
+        symbol_reg - the symbol region
+    """
     is_fwd_decl, declaration_reg = get_declaration(view, symbol_reg)
 
-    # todo get this to recognize libraries as a scope
+    # todo get this to recognize libraries as a scope(?)
     if is_fwd_decl:
         return None
 
@@ -125,11 +181,40 @@ def get_scope(view, symbol_reg):
     return scope
 
 
-# For testing
-class TestCommand(sublime_plugin.TextCommand):
+def get_sub_scopes(view, region):
+    """
+    Returns the region associated with the
+    symbol without converting it to a scope
+
+    Parameters:
+        view - sublime view
+        symbol_reg - the symbol region
+    """
+    subscopes = list()
+
+    for pair in view.symbols():
+        symbol_reg = pair[0]
+
+        # Do nothing if the symbol is not within the region
+        if(symbol_reg.end() < region.begin() or
+                symbol_reg.begin() > region.end()):
+            continue
+
+        # Do nothing if the symbol is within a subscope (nested)
+        if(subscopes and
+                (symbol_reg.begin() >
+                    subscopes[-1].definition_region.begin() and
+                    symbol_reg.end() < subscopes[-1].definition_region.end())):
+            continue
+
+        subscopes.append(get_scope(view, symbol_reg))
+
+    return subscopes
+
+
+class ParseCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        for pair in self.view.symbols():
-            scope = get_scope(self.view, pair[0])
-            if scope:
-                print(scope.declaration)
-                print(scope.get_panel_options())
+        classAreg = sublime.Region(9, 88)
+        subscopes = get_sub_scopes(self.view, classAreg)
+        for scope in subscopes:
+            print(scope.declaration)
