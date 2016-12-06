@@ -2,7 +2,7 @@ import sublime
 import sublime_plugin
 from collections import deque
 from .scopes import *
-from .parse import GlobalScope, Function, Class, is_valid_type, scope_types
+from .parse import get_sub_scopes
 
 global_namespace = 'global namespace'
 
