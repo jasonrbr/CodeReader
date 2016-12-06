@@ -338,8 +338,8 @@ class Class(Scope):
             sublime.Region(self._body.begin(), self._body.end()))
 
         # TODO: Don't read body of member function (make sub menu?)
-        returned_panel_options = read_definition(self, definition=definition,
-                                                 panel_options=panel_options,
-                                                 read_line_numbers=read_line_numbers)
+        ret_panel_opts = read_definition(self, definition=definition,
+                                         panel_options=panel_options,
+                                         read_line_numbers=read_line_numbers)
 
-        return returned_panel_options
+        return ret_panel_opts
