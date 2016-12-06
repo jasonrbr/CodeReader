@@ -3,12 +3,17 @@ import re
 from .parse_symbols import parse_symbols
 from .config import *
 
-# Scope types
 global_scope_name = 'global namespace'
 func_scope_type = 'functions'
-other_scope_type = 'other'
 class_scope_type = 'classes'
 library_scope_type = 'library'
+
+scope_types = {func_scope_type, class_scope_type, library_scope_type}
+
+
+def is_valid_type(scope_type):
+    print(type(scope_type))
+    return scope_type in scope_types
 
 
 # Read the lines in the definition for the scope in a nice way
@@ -110,14 +115,21 @@ class Scope():
         return self._scope_type == class_scope_type
 
 
+"""TODO: make this derive from ScopesWithDefinitions, and have its
+    declaration match its definition???"""
 class GlobalScope(Scope):
     def __init__(self, view):
         super().__init__(view, global_scope_name)
         self._body_reg = sublime.Region(0, self._view.size())
 
+    # Called "definition region" for sorta-polymorphism
     @property
-    def body_region(self):
+    def definition_region(self):
         return self._body_reg
+
+    @property
+    def can_have_subscopes(self):
+        return True
 
 
 class Library(Scope):
