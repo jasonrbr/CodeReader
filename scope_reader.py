@@ -25,7 +25,6 @@ class Reader():
         self._in_comment = False
 
         subregions = view.split_by_newlines(region)
-
         parsed_lines = list()
 
         for subregion in subregions:
@@ -183,4 +182,3 @@ class Reader():
 #                 panel_options.append('end comment')
 #                 single_line_comment = False
 #     return panel_options
-
