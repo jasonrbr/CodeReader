@@ -1,7 +1,8 @@
 import sublime
 import re
-from .parse_symbols import parse_symbols
 from .config import *
+from .parse_symbols import parse_symbols
+from .scope_reader import Reader
 
 global_scope_name = 'global namespace'
 func_scope_type = 'functions'
@@ -10,89 +11,12 @@ library_scope_type = 'library'
 
 scope_types = {func_scope_type, class_scope_type, library_scope_type}
 
+# Used to grab a scope's panel options
+scope_reader = Reader()
+
 
 def is_valid_type(scope_type):
     return scope_type in scope_types
-
-
-# Read the lines in the definition for the scope in a nice way
-def read_definition(scope, definition, panel_options, read_line_numbers):
-    subscope_stack = list()
-
-    single_line_comment = False
-    multi_line_comment_found_begin = False
-    multi_line_comment_found_end = False
-
-    # for all the lines in the definition
-    for line in definition:
-
-        line_str = scope._view.substr(line)
-
-        if "}" in line_str:
-            subscope_type = subscope_stack.pop()
-            panel_options.append("exiting " + subscope_type)
-            continue
-
-        if "for" in line_str:
-            subscope_stack.append("for loop")
-        elif "while" in line_str:
-            subscope_stack.append("while loop")
-        elif "if" in line_str and "else" not in line_str:
-            subscope_stack.append("if statement")
-        elif "if" in line_str and "else" in line_str:
-            subscope_stack.append("else if statement")
-        elif "if" not in line_str and "else" in line_str:
-            subscope_stack.append("else statement")
-        # Catchall for other scopes
-        elif "{" in line_str:
-            subscope_stack.append("scope")
-
-        if line_str and not line_str.isspace():
-
-            # Is reading_comments off?
-            if not Config.get('read_comments'):
-
-                # If it's a single line comment
-                if '//' in line_str:
-                    single_line_comment = True
-                    continue
-
-                # Find start of multi line comment
-                if '/*' in line_str:
-                    multi_line_comment_found_begin = True
-                    multi_line_comment_found_end = False
-                    continue
-
-                # Found the end of the multi line comment!
-                if '*/' in line_str:
-                    multi_line_comment_found_end = True
-                    multi_line_comment_found_begin = False
-                    continue
-
-                # If there is more of the multi line comment to be found
-                if (multi_line_comment_found_begin and
-                        not multi_line_comment_found_end):
-                    continue
-
-            # Need to read comments
-            else:
-                # If it's a single line comment
-                if '//' in line_str:
-                    single_line_comment = True
-
-            parsed_string = parse_symbols(line_str)
-
-            if read_line_numbers:
-                row, col = scope._view.rowcol(line.a)
-                parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
-
-            panel_options.append(parsed_string)
-
-            # Check for single line comment
-            if single_line_comment and Config.get('read_comments'):
-                panel_options.append('end comment')
-                single_line_comment = False
-    return panel_options
 
 
 class Scope():
@@ -114,8 +38,8 @@ class Scope():
         return self._scope_type == class_scope_type
 
 
-"""TODO: make this derive from ScopesWithDefinitions, and have its
-    declaration match its definition???"""
+# TODO: make this derive from ScopesWithDefinitions, and have its
+# declaration match its definition???
 class GlobalScope(Scope):
     def __init__(self, view):
         super().__init__(view, global_scope_name)
@@ -131,6 +55,7 @@ class GlobalScope(Scope):
         return True
 
 
+# TODO: do we even need this?
 class Library(Scope):
     def __init__(self, view, declaration_reg):
         """
@@ -140,7 +65,6 @@ class Library(Scope):
                           (ie., "#include <...>")
         """
         self._declaration_reg = declaration_reg
-        self._name = _get_name(self._declaration_reg)
 
         super().__init__(view,
                          self._name,
@@ -149,7 +73,7 @@ class Library(Scope):
     # TODO: do we need to parse out '#'?
     @property
     def declaration(self):
-        return view.substr(self._declaration_reg)
+        return self._view.substr(self._declaration_reg)
 
     # TODO: make work for project libs (e.g. #include "lib.h")
     @property
@@ -157,8 +81,8 @@ class Library(Scope):
         return '\#include \<(\w+)\>'
 
     def _get_name(self):
-        lib_pattern = regex_pattern()
-        txt = self.view.substr(rgn)
+        lib_pattern = self.regex_pattern
+        txt = self.view.substr(self._declaration_reg)
         m = re.match(lib_pattern, txt)
         return m.group(1)
 
@@ -238,29 +162,19 @@ class Function(ScopesWithDefinitions):
         return func_name
 
     def _get_panel_options(self):
-        panel_options = []
-
-        # init the config file for reading
         Config.init()
         read_line_numbers = Config.get('read_line_numbers')
 
         decl_str = self.declaration
 
         if read_line_numbers:
-            row, col = self._view.rowcol(self._declaration_reg.a)
+            row, col = self._view.rowcol(self._declaration_reg.begin())
             decl_str = 'line ' + str(row + 1) + ', ' + decl_str
 
-        panel_options.append(decl_str)
+        panel_options = [decl_str]
+        panel_options.extend(reader.read(self._definition_reg))
 
-        definition = self._view.split_by_newlines(
-            sublime.Region(self._definition_reg.begin(),
-                           self._definition_reg.end()))
-
-        returned_panel_options = read_definition(self, definition=definition,
-                                                 panel_options=panel_options,
-                                                 read_line_numbers=read_line_numbers)
-
-        return returned_panel_options
+        return panel_options
 
 
 class Class(ScopesWithDefinitions):
