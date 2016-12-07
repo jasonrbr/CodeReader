@@ -9,14 +9,14 @@ from .scopes import *
 # Menu option menu strings:
 go_up_prfx = 'go up to scope, '
 read_prfx = 'read '  # Note: reed not read for proper pronunciation
-scope_prfx = 'scope '
+scope_prfx = 'you are in scope '
 
 # Child option menu strings:
 title_str = 'scope {}s {}'
-return_to_options_prfx = 'See all children options for '
+return_to_options_prfx = 'go back to options for '
 
 # Read option menu strings:
-quit_str = 'Quit reading'
+quit_str = 'quit reading'
 
 # Option menu Indices
 title_ind = 0
