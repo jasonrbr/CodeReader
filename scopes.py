@@ -87,7 +87,7 @@ class Library(Scope):
         return m.group(1)
 
 
-class ScopesWithDefinitions(Scope):
+class ReadableScopes(Scope):
     def __init__(self, view, name, scope_type,
                  declaration_reg, definition_reg):
         self._declaration_reg = declaration_reg
@@ -99,6 +99,10 @@ class ScopesWithDefinitions(Scope):
         return self._declaration_reg == other._declaration_reg
 
     @property
+    def panel_options(self):
+        return self._get_panel_options()
+
+    @property
     def declaration_region(self):
         return self._declaration_reg
 
@@ -106,8 +110,23 @@ class ScopesWithDefinitions(Scope):
     def definition_region(self):
         return self._definition_reg
 
+    def _get_panel_options(self):
+        Config.init()
+        read_line_numbers = Config.get('read_line_numbers')
 
-class Function(ScopesWithDefinitions):
+        decl_str = self.declaration
+
+        if read_line_numbers:
+            row, col = self._view.rowcol(self._declaration_reg.begin())
+            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
+
+        panel_options = [decl_str]
+        panel_options.extend(scope_reader.read(self._view,
+                                               self._definition_reg))
+        return panel_options
+
+
+class Function(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
         func_name = self._get_func_name(view, declaration_reg)
         super().__init__(view, func_name, func_scope_type,
@@ -131,10 +150,6 @@ class Function(ScopesWithDefinitions):
             return decl_str
 
         return decl_str + " and takes {}".format(params)
-
-    @property
-    def panel_options(self):
-        return self._get_panel_options()
 
     @property
     def params(self):
@@ -161,23 +176,8 @@ class Function(ScopesWithDefinitions):
 
         return func_name
 
-    def _get_panel_options(self):
-        Config.init()
-        read_line_numbers = Config.get('read_line_numbers')
 
-        decl_str = self.declaration
-
-        if read_line_numbers:
-            row, col = self._view.rowcol(self._declaration_reg.begin())
-            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
-
-        panel_options = [decl_str]
-        panel_options.extend(scope_reader.read(self._view,
-                                               self._definition_reg))
-        return panel_options
-
-
-class Class(ScopesWithDefinitions):
+class Class(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
         class_name = view.substr(declaration_reg).split()[1]
         super().__init__(view, parse_symbols(class_name), class_scope_type,
@@ -189,32 +189,3 @@ class Class(ScopesWithDefinitions):
     @property
     def declaration(self):
         return 'class {}'.format(self._name)
-
-    @property
-    def panel_options(self):
-        return self._get_panel_options()
-
-    def _get_panel_options(self):
-        panel_options = []
-
-        decl_str = self.declaration
-        # init the config file for reading
-        Config.init()
-        read_line_numbers = Config.get('read_line_numbers')
-
-        if read_line_numbers:
-            row, col = self._view.rowcol(self._declaration_reg.a)
-            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
-
-        panel_options.append(decl_str)
-
-        definition = self._view.split_by_newlines(
-            sublime.Region(self._definition_reg.begin(),
-                           self._definition_reg.end()))
-
-        # TODO: Don't read body of member function (make sub menu?)
-        returned_panel_options = read_definition(self, definition=definition,
-                                                 panel_options=panel_options,
-                                                 read_line_numbers=read_line_numbers)
-
-        return returned_panel_options
