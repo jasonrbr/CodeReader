@@ -205,29 +205,3 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
     def _get_go_up_ind(self):
         return len(self._panel_options) - 1
-
-    # def _get_hierarchy_tree(self):
-    #     scopes = list()
-    #     # Convert all symbols in the view to scopes
-    #     for pair in self.view.symbols():
-    #         scope = get_scope(self.view, pair[0])
-    #         # TODO: handle fwd declarations
-    #         if scope:
-    #             scopes.append(scope)
-
-    #     # Look for libraries in view to make into scopes
-    #     view_rgn = sublime.Region(0, len(self.view))
-    #     lib_pattern = '\#include \<(\w+)\>'
-    #     for rgn in self.view.split_by_newlines(view_rgn):
-    #         txt = self.view.substr(rgn)
-    #         m = re.match(lib_pattern, txt)
-    #         if m:
-    #             library_name = m.group(1)
-    #             scopes.append(Library(self.view, library_name, rgn))
-    #             # TODO this is subscope agnostic at the moment
-
-    #     tree = MenuTree(self.view)
-    #     for scope in scopes:
-    #         tree.push(scope)
-
-        return tree
