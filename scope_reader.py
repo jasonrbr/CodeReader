@@ -17,14 +17,14 @@ class Reader():
             "{": "scope"
         }
 
-    def read(self, region, subregions_to_ignore=None):
+    def read(self, view, region, subregions_to_ignore=None):
         self._subscope_stack = list()
         self._subregions_to_ignore = subregions_to_ignore
         # Tracks whether or not the reader is currently in
         # a comment
         self._in_comment = False
 
-        subregions = self._view.split_by_newlines(region)
+        subregions = view.split_by_newlines(region)
 
         parsed_lines = list()
 
@@ -33,7 +33,7 @@ class Reader():
             if self._ignore_region(subregion):
                 continue
 
-            line_str = self.view.substr(subregion)
+            line_str = view.substr(subregion)
             translated_line = self._translate_line(line_str)
 
             if not translated_line:
