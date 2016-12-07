@@ -174,7 +174,6 @@ class Function(ScopesWithDefinitions):
         panel_options = [decl_str]
         panel_options.extend(scope_reader.read(self._view,
                                                self._definition_reg))
-
         return panel_options
 
 
