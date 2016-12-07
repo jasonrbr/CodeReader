@@ -45,7 +45,7 @@ class Reader():
 
             # Concat line numbers
             if self._read_line_numbers:
-                row, _ = scope._view.rowcol(subregion.begin())
+                row, _ = view.rowcol(subregion.begin())
                 parsed_line = ('line ' + str(row + 1) +
                                ', ' + parsed_line)
 
@@ -61,11 +61,13 @@ class Reader():
         # Exiting subscope
         if '}' in line_str:
             subscope_name = self._subscope_stack.pop()
-            return self._subscope_strings['}'].append(subscope_name)
+            subscope_str = self._subscope_strings[subscope_name]
+            return self._subscope_strings['}'].append(subscope_str)
 
-        # Entering scope:
+        # Entering subscope:
         for subscope_name, subscope_string in self._subscope_strings.items():
             if subscope_name in line_str:
+                self._subscope_stack.push(subscope_name)
                 return subscope_string
 
         # Entering a comment
