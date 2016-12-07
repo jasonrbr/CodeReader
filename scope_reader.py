@@ -13,8 +13,7 @@ class Reader():
             "while": "while loop",
             "if": "if statement",
             "else if": "else if statement",
-            "else": "else statement",
-            "{": "scope"
+            "else": "else statement"
         }
 
     def read(self, view, region, subregions_to_ignore=None):
@@ -61,12 +60,13 @@ class Reader():
         if '}' in line_str:
             subscope_name = self._subscope_stack.pop()
             subscope_str = self._subscope_strings[subscope_name]
-            return self._subscope_strings['}'].append(subscope_str)
+            return self._subscope_strings['}'].format(subscope_str)
 
         # Entering subscope:
         for subscope_name, subscope_string in self._subscope_strings.items():
+            print(subscope_name)
             if subscope_name in line_str:
-                self._subscope_stack.push(subscope_name)
+                self._subscope_stack.append(subscope_name)
                 return subscope_string
 
         # Entering a comment
@@ -107,80 +107,3 @@ class Reader():
         return (self._subregions_to_ignore and
                 region.begin() >= self._subregions_to_ignore[0].begin() and
                 region.end() <= self._subregions_to_ignore.end())
-
-
-# Read the lines in the definition for the scope in a nice way
-# def read_definition(scope, definition, panel_options, read_line_numbers):
-#     subscope_stack = list()
-
-#     single_line_comment = False
-#     multi_line_comment_found_begin = False
-#     multi_line_comment_found_end = False
-#     for line in definition:
-#         line_str = scope._view.substr(line)
-
-#         if "}" in line_str:
-#             subscope_type = subscope_stack.pop()
-#             panel_options.append("exiting " + subscope_type)
-#             continue
-
-#         if "for" in line_str:
-#             subscope_stack.append("for loop")
-#         elif "while" in line_str:
-#             subscope_stack.append("while loop")
-#         elif "if" in line_str and "else" not in line_str:
-#             subscope_stack.append("if statement")
-#         elif "if" in line_str and "else" in line_str:
-#             subscope_stack.append("else if statement")
-#         elif "if" not in line_str and "else" in line_str:
-#             subscope_stack.append("else statement")
-#         # Catchall for other scopes
-#         elif "{" in line_str:
-#             subscope_stack.append("scope")
-
-#         if line_str and not line_str.isspace():
-
-#             # Is reading_comments off?
-#             if not Config.get('read_comments'):
-
-#                 # If it's a single line comment
-#                 if '//' in line_str:
-#                     single_line_comment = True
-#                     continue
-
-#                 # Find start of multi line comment
-#                 if '/*' in line_str:
-#                     multi_line_comment_found_begin = True
-#                     multi_line_comment_found_end = False
-#                     continue
-
-#                 # Found the end of the multi line comment!
-#                 if '*/' in line_str:
-#                     multi_line_comment_found_end = True
-#                     multi_line_comment_found_begin = False
-#                     continue
-
-#                 # If there is more of the multi line comment to be found
-#                 if (multi_line_comment_found_begin and
-#                         not multi_line_comment_found_end):
-#                     continue
-
-#             # Need to read comments
-#             else:
-#                 # If it's a single line comment
-#                 if '//' in line_str:
-#                     single_line_comment = True
-
-#             parsed_string = parse_symbols(line_str)
-
-#             if read_line_numbers:
-#                 row, col = scope._view.rowcol(line.a)
-#                 parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
-
-#             panel_options.append(parsed_string)
-
-#             # Check for single line comment
-#             if single_line_comment and Config.get('read_comments'):
-#                 panel_options.append('end comment')
-#                 single_line_comment = False
-#     return panel_options
