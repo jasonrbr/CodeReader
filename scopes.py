@@ -172,7 +172,7 @@ class Function(ScopesWithDefinitions):
             decl_str = 'line ' + str(row + 1) + ', ' + decl_str
 
         panel_options = [decl_str]
-        panel_options.extend(reader.read(self._definition_reg))
+        panel_options.extend(scope_reader.read(self._definition_reg))
 
         return panel_options
 
