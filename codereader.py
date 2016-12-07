@@ -1,6 +1,5 @@
 import sublime
 import sublime_plugin
-import re
 from .audio import say
 from .menu import get_hierarchy_tree
 from .parse import *
