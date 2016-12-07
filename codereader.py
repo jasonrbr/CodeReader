@@ -41,10 +41,18 @@ def show_panel(options, on_done, on_hilight=None):
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        # initilze configuration before the rest of run
-        Config.init()
-        self._curr_node = get_hierarchy_tree(self.view)
-        self._show_options_menu()
+        try:
+            # initilze configuration before the rest of run
+            Config.init()
+            self._curr_node = get_hierarchy_tree(self.view)
+            self._show_options_menu()
+        except Exception as e:
+            sublime.error_message('Something went wrong!\n'
+                                  'Either you have code not up to standards,'
+                                  ' or something is seriously wrong.\n'
+                                  'Please check the console for details')
+            print(e)
+            print('jfksadljflkdsajfl;kdsajklfjdkl;asjfklsdjfl;ksd')
 
     def _show_children_menu(self, child_type):
         """
