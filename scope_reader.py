@@ -1,13 +1,24 @@
 from .config import *
-from .parse_symbols import parse_symbols
+# from .parse_symbols import parse_symbols
 
 
-class Reader():
+class ReadingState():
     def __init__(self):
+        # Config States
         Config.init()
-        self._read_line_numbers = Config.get('read_line_numbers')
-        self._read_comments = Config.get('read_comments')
-        self._subscope_strings = {
+        self.read_comments = Config.get('read_comments')
+        # Comment State
+        self.in_comment = False
+        # Available subscopes (functions)
+        self.subscope_strings = None
+        # Regions to ignore (classes)
+        self.subregions_to_ignore = None
+
+
+class FunctionReadingState(ReadingState):
+    def __init__(self):
+        super.__init__()
+        self.subscope_strings = {
             "}": "exiting {}",
             "for": "foor loop",
             "while": "while loop",
@@ -15,139 +26,288 @@ class Reader():
             "else if": "else if statement",
             "else": "else statement"
         }
+        # Tracks entering and exiting subscopes
+        self.subscope_stack = None
 
-    def read(self, view, region, subregions_to_ignore=None):
-        self._subscope_stack = list()
-        self._subregions_to_ignore = subregions_to_ignore
-        # Tracks whether or not the reader is currently in
-        # a comment
-        self._in_comment = False
 
-        subregions = view.split_by_newlines(region)
-        parsed_lines = list()
+class ClassReadingState(ReadingState):
+    def __init__(self, regions_to_ignore, subscope_decl_regions):
+        super.__init__()
+        self.subregions_to_ignore = regions_to_ignore
+        self.subscope_decl_regions = subscope_decl_regions
 
-        for subregion in subregions:
-            ignore, modified_subregion = self._ignore_region(subregion)
 
-            # Do nothing if subregion should be ignored
+def _handle_comment(view, reading_state, line_str):
+    # Entering a comment
+    if "/*" in line_str:
+        reading_state.in_comment = True
+
+    # If inside of a comment, only return the translated string if
+    # read comments has been toggled on
+    if "//" in line_str or reading_state.in_comment:
+        # Exiting a comment
+        if "*/" in line_str:
+            reading_state.in_comment = False
+
+        # Decide whether to read the comment
+        if reading_state.read_comments:
+            return "Comment: {}".format(line_str)
+        else:
+            return None
+
+    # No need to translate
+    return line_str
+
+
+def _handle_subscopes(reading_state, line_str):
+    # Exiting subscope
+    if '}' in line_str:
+        print("line: " + line_str)
+        subscope_name = reading_state.subscope_stack.pop()
+        subscope_str = reading_state.subscope_strings[subscope_name]
+        return True, reading_state.subscope_strings['}'].format(subscope_str)
+
+    # Entering subscope:
+    for key, val in reading_state.subscope_strings.items():
+        if key in line_str:
+            reading_state.subscope_stack.append(key)
+            return True, val
+
+    # Not a subscope
+    return False, line_str
+
+
+def _translate_line_region(view, reading_state, line_region):
+    line_str = view.substr(line_region)
+
+    # Case: empty line or line of whitespace
+    if line_str.isspace():
+        return None
+
+    # Case: the scope being read can have subscopes
+    # such as loops, if statements, etc
+    if reading_state.subscope_strings:
+        did_modify, line_str = _handle_subscopes(reading_state, line_str)
+        # The line either represents entering or exiting
+        # a subscope
+        if did_modify:
+            return line_str
+
+    # Returns unmodified line if it's not a comment
+    return _handle_comment(line_str, in_comment)
+
+
+def read_region(view, reading_state, region):
+    subregions = view.split_by_newlines(region)
+
+    parsed_lines = list()
+
+    for subregion in subregions:
+        # Case: scope being read has subregions
+        # that need to be ignored
+        if reading_state.subregions_to_ignore:
+            ignore, subregion = ignore_region(subregion)
+            # Goto next subregion if this subregion must
+            # be ignored
             if ignore:
                 continue
 
-            line_str = view.substr(modified_subregion)
-            translated_line = self._translate_line(line_str)
+        line_str =\
+            _translate_line_region(view, reading_state, subregion)
 
-            if not translated_line:
-                continue
+        # Goto next subregion if the line was translated
+        # to the empty string
+        if not translated_line:
+            continue
 
-            # Parse symbols out of line
-            # TODO: just have say do this?
-            parsed_line = parse_symbols(translated_line)
+        # Parse symbols out of line
+        # TODO: do I have to do this?
+        line_str = parse_symbols(line_str)
 
-            # Concat line numbers
-            if self._read_line_numbers:
-                row, _ = view.rowcol(modified_subregion.begin())
-                parsed_line = ('line ' + str(row + 1) +
-                               ', ' + parsed_line)
+        # Concat line numbers if necessary
+        if reading_state.read_line_numbers:
+            row, _ = view.rowcol(modified_subregion.begin())
+            line_str = ('line ' + str(row + 1) +
+                        ', ' + line_str)
 
-            parsed_lines.append(parsed_line)
+        parsed_lines.append(line_str)
 
-        return parsed_lines
+    return parsed_lines
 
-    def _translate_line(self, line_str):
-        # Case: empty line or line of whitespace
-        if line_str.isspace():
-            return None
 
-        # Exiting subscope
-        if '}' in line_str:
-            print("line: " + line_str)
-            subscope_name = self._subscope_stack.pop()
-            subscope_str = self._subscope_strings[subscope_name]
-            return self._subscope_strings['}'].format(subscope_str)
+# class ReaderCommand(sublime_plugin.TextCommand):
+#     def run(self, edit):
 
-        # Entering subscope:
-        for subscope_name, subscope_string in self._subscope_strings.items():
-            if subscope_name in line_str:
-                self._subscope_stack.append(subscope_name)
-                return subscope_string
 
-        # Entering a comment
-        if "/*" in line_str:
-            self._in_comment = True
 
-        # If inside of a comment, only return the translated string if
-        # read comments has been toggled on
-        if "//" in line_str or self._in_comment:
-            # Exiting a comment
-            if "*/" in line_str:
-                self._in_comment = False
 
-            # Decide whether to read the comment
-            if self._read_comments:
-                return "Comment: {}".format(line_str)
-            else:
-                return None
 
-        # No need to translate
-        return line_str
 
-    def _ignore_region(self, subregion):
-        # No regions should be ignored
-        if not self._subregions_to_ignore:
-            return False, subregion
 
-        # 'Subregions to ignore' is a list sorted in ascending region
-        # order. Remove subregions from the front of the list until
-        # a subregion that contains region is found. If none can be
-        # found, no other regions must be ignored.
-        while subregion.begin() > self._subregions_to_ignore[0].end():
-            del self._subregions_to_ignore[0]
 
-        # Check if any subregions to ignore remain
-        if not self._subregions_to_ignore:
-            return False, subregion
 
-        is_begin_of_subregion_inside_region = \
-            self._is_begin_of_subregion_inside_region(
-                subregion, self._subregions_to_ignore[0])
 
-        is_end_of_subregion_inside_region = \
-            self._is_end_of_subregion_inside_region(
-                subregion, self._subregions_to_ignore[0])
 
-        # Ignore the entire subregion if its begin and end point lies
-        # within the superregion (inclusive)
-        if (is_begin_of_subregion_inside_region and
-                is_end_of_subregion_inside_region):
-            return True, subregion
-        # Modify the subregion if its first section lies within
-        # the subregion
-        elif is_begin_of_subregion_inside_region:
-            return False, sublime.Region(
-                self._subregions_to_ignore[0].end() + 1, subregion.end())
-        # Modify the subregion if its last section lies within
-        # the subregion
-        elif is_end_of_subregion_inside_region:
-            return False, sublime.Region(subregion.begin(),
-                                         self._subregions_to_ignore[0].begin())
-        # Don't modify the subregion
-        else:
-            return False, subregion
 
-    def _is_begin_of_subregion_inside_region(self, subregion, region):
-        """
-        Returns true if subregion.begin() lies inbetween the subregion.begin()
-        and subregion.end() inclusive.
-        e.g. returns true if subregion = (5, 15) and region = (0, 10)
-        """
-        return (subregion.begin() >= region.begin() and
-                subregion.begin() <= region.end())
 
-    def _is_end_of_subregion_inside_region(self, subregion, region):
-        """
-        Returns true if subregion.end() lies inbetween the subregion.begin()
-        and subregion.end() inclusive.
-        e.g. returns true if subregion = (0, 10) and region = (5, 15)
-        """
-        return (subregion.end() >= region.begin() and
-                subregion.end() <= region.end())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# class Reader():
+#     def __init__(self):
+#         Config.init()
+#         self._read_line_numbers = Config.get('read_line_numbers')
+#         self._read_comments = Config.get('read_comments')
+#         self._subscope_strings = {
+#             "}": "exiting {}",
+#             "for": "foor loop",
+#             "while": "while loop",
+#             "if": "if statement",
+#             "else if": "else if statement",
+#             "else": "else statement"
+#         }
+
+#     def read(self, view, region, subregions_to_ignore=None):
+#         self._subscope_stack = list()
+#         self._subregions_to_ignore = subregions_to_ignore
+#         # Tracks whether or not the reader is currently in
+#         # a comment
+#         self._in_comment = False
+
+#         subregions = view.split_by_newlines(region)
+#         parsed_lines = list()
+
+#         for subregion in subregions:
+#             ignore, modified_subregion = self._ignore_region(subregion)
+
+#             # Do nothing if subregion should be ignored
+#             if ignore:
+#                 continue
+
+#             translated_line = self._translate_line(modified_subregion)
+
+#             if not translated_line:
+#                 continue
+
+#             # Parse symbols out of line
+#             # TODO: just have say do this?
+#             parsed_line = parse_symbols(translated_line)
+
+#             # Concat line numbers
+#             if self._read_line_numbers:
+#                 row, _ = view.rowcol(modified_subregion.begin())
+#                 parsed_line = ('line ' + str(row + 1) +
+#                                ', ' + parsed_line)
+
+#             parsed_lines.append(parsed_line)
+
+#         return parsed_lines
+#     def _handle_comment(self, line_str):
+#         # Entering a comment
+#         if "/*" in line_str:
+#             self._in_comment = True
+
+#         # If inside of a comment, only return the translated string if
+#         # read comments has been toggled on
+#         if "//" in line_str or self._in_comment:
+#             # Exiting a comment
+#             if "*/" in line_str:
+#                 self._in_comment = False
+
+#             # Decide whether to read the comment
+#             if self._read_comments:
+#                 return "Comment: {}".format(line_str)
+#             else:
+#                 return None
+
+#         # No need to translate
+#         return line_str
+
+#     def _ignore_region(self, subregion):
+#         # No regions should be ignored
+#         if not self._subregions_to_ignore:
+#             return False, subregion
+
+#         # 'Subregions to ignore' is a list sorted in ascending region
+#         # order. Remove subregions from the front of the list until
+#         # a subregion that contains region is found. If none can be
+#         # found, no other regions must be ignored.
+#         while subregion.begin() > self._subregions_to_ignore[0].end():
+#             del self._subregions_to_ignore[0]
+
+#         # Check if any subregions to ignore remain
+#         if not self._subregions_to_ignore:
+#             return False, subregion
+
+#         is_begin_of_subregion_inside_region = \
+#             self._is_begin_of_subregion_inside_region(
+#                 subregion, self._subregions_to_ignore[0])
+
+#         is_end_of_subregion_inside_region = \
+#             self._is_end_of_subregion_inside_region(
+#                 subregion, self._subregions_to_ignore[0])
+
+#         # Ignore the entire subregion if its begin and end point lies
+#         # within the superregion (inclusive)
+#         if (is_begin_of_subregion_inside_region and
+#                 is_end_of_subregion_inside_region):
+#             return True, subregion
+#         # Modify the subregion if its first section lies within
+#         # the subregion
+#         elif is_begin_of_subregion_inside_region:
+#             return False, sublime.Region(
+#                 self._subregions_to_ignore[0].end() + 1, subregion.end())
+#         # Modify the subregion if its last section lies within
+#         # the subregion
+#         elif is_end_of_subregion_inside_region:
+#             return False, sublime.Region(subregion.begin(),
+#                                          self._subregions_to_ignore[0].begin())
+#         # Don't modify the subregion
+#         else:
+#             return False, subregion
+
+#     def _is_begin_of_subregion_inside_region(self, subregion, region):
+#         """
+#         Returns true if subregion.begin() lies inbetween the subregion.begin()
+#         and subregion.end() inclusive.
+#         e.g. returns true if subregion = (5, 15) and region = (0, 10)
+#         """
+#         return (subregion.begin() >= region.begin() and
+#                 subregion.begin() <= region.end())
+
+#     def _is_end_of_subregion_inside_region(self, subregion, region):
+#         """
+#         Returns true if subregion.end() lies inbetween the subregion.begin()
+#         and subregion.end() inclusive.
+#         e.g. returns true if subregion = (0, 10) and region = (5, 15)
+#         """
+#         return (subregion.end() >= region.begin() and
+#                 subregion.end() <= region.end())
