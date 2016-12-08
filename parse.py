@@ -241,6 +241,18 @@ class ParseCommand(sublime_plugin.TextCommand):
             self.print_subscopes(scope=subscope)
 
     def run(self, edit):
-        global_namespace_reg = sublime.Region(0, self.view.size())
-        global_scope = Scope(view=self.view, name='global namespace')
-        self.print_subscopes(scope=global_scope, region=global_namespace_reg)
+        classA_reg = sublime.Region(6, 7)
+        classA = get_scope(self.view, classA_reg)
+
+        # print(self.view.substr(classA.definition_region))
+
+        subscopes = get_sub_scopes(self.view, classA.definition_region)
+
+        for scope in subscopes:
+            print("{}:".format(scope.name))
+            print(self.view.substr(scope.definition_region))
+            print("")
+
+        # global_namespace_reg = sublime.Region(0, self.view.size())
+        # global_scope = Scope(view=self.view, name='global namespace')
+        # self.print_subscopes(scope=global_scope, region=global_namespace_reg)
