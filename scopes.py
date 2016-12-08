@@ -1,6 +1,7 @@
 import sublime
 import re
 from .config import *
+from .parse import get_sub_scopes
 from .parse_symbols import parse_symbols
 from .scope_reader import Reader
 
@@ -99,10 +100,6 @@ class ReadableScopes(Scope):
         return self._declaration_reg == other._declaration_reg
 
     @property
-    def panel_options(self):
-        return self._get_panel_options()
-
-    @property
     def declaration_region(self):
         return self._declaration_reg
 
@@ -110,7 +107,7 @@ class ReadableScopes(Scope):
     def definition_region(self):
         return self._definition_reg
 
-    def _get_panel_options(self):
+    def _get_panel_options(self, subregions_to_ignore=None):
         Config.init()
         read_line_numbers = Config.get('read_line_numbers')
 
@@ -122,7 +119,8 @@ class ReadableScopes(Scope):
 
         panel_options = [decl_str]
         panel_options.extend(scope_reader.read(self._view,
-                                               self._definition_reg))
+                                               self._definition_reg,
+                                               subregions_to_ignore))
         return panel_options
 
 
@@ -134,6 +132,10 @@ class Function(ReadableScopes):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.params == other.params
+
+    @property
+    def panel_options(self):
+        return self._get_panel_options()
 
     @property
     def declaration(self):
@@ -182,10 +184,24 @@ class Class(ReadableScopes):
         class_name = view.substr(declaration_reg).split()[1]
         super().__init__(view, parse_symbols(class_name), class_scope_type,
                          declaration_reg, definition_reg)
+        self._regions_to_ignore = self._get_regions_to_ignore()
 
     def __eq__(self, other):
         return super().__eq__(other)
 
     @property
+    def panel_options(self):
+        return self._get_panel_options(self._regions_to_ignore)
+
+    @property
     def declaration(self):
         return 'class {}'.format(self._name)
+
+    def _get_regions_to_ignore(self):
+        scopes_to_ignore = get_sub_scopes(self._view,
+                                          self._definition_reg)
+        regions_to_ignore = list()
+        for scope in scopes_to_ignore:
+            regions_to_ignore.append(scope.definition_region)
+
+        return regions_to_ignore
