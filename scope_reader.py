@@ -27,11 +27,13 @@ class Reader():
         parsed_lines = list()
 
         for subregion in subregions:
+            ignore, modified_subregion = self._ignore_region(subregion)
+
             # Do nothing if subregion should be ignored
-            if self._ignore_region(subregion):
+            if ignore:
                 continue
 
-            line_str = view.substr(subregion)
+            line_str = view.substr(modified_subregion)
             translated_line = self._translate_line(line_str)
 
             if not translated_line:
@@ -43,7 +45,7 @@ class Reader():
 
             # Concat line numbers
             if self._read_line_numbers:
-                row, _ = view.rowcol(subregion.begin())
+                row, _ = view.rowcol(modified_subregion.begin())
                 parsed_line = ('line ' + str(row + 1) +
                                ', ' + parsed_line)
 
@@ -58,13 +60,13 @@ class Reader():
 
         # Exiting subscope
         if '}' in line_str:
+            print("line: " + line_str)
             subscope_name = self._subscope_stack.pop()
             subscope_str = self._subscope_strings[subscope_name]
             return self._subscope_strings['}'].format(subscope_str)
 
         # Entering subscope:
         for subscope_name, subscope_string in self._subscope_strings.items():
-            print(subscope_name)
             if subscope_name in line_str:
                 self._subscope_stack.append(subscope_name)
                 return subscope_string
@@ -92,7 +94,7 @@ class Reader():
     def _ignore_region(self, region):
         # No regions should be ignored
         if not self._subregions_to_ignore:
-            return False
+            return False, region
 
         # 'Subregions to ignore' is a list sorted in ascending region
         # order. Remove subregions from the front of the list until
@@ -101,9 +103,51 @@ class Reader():
         while region.begin() > self._subregions_to_ignore[0].end():
             del self._subregions_to_ignore[0]
 
-        # Returns False if the previous loop emptied all subregions
-        # in 'subregions to ignore'. Checks whether region is contained
-        # within the first subregion in 'subregions to ignore'
-        return (self._subregions_to_ignore and
-                region.begin() >= self._subregions_to_ignore[0].begin() and
-                region.end() <= self._subregions_to_ignore.end())
+        # Check if any subregions to ignore remain
+        if not self._subregions_to_ignore:
+            return False, region
+
+        is_begin_of_subregion_inside_region = \
+            self._is_begin_of_subregion_inside_region(
+                region, self._subregions_to_ignore[0])
+
+        is_end_of_subregion_inside_region = \
+            self._is_end_of_subregion_inside_region(
+                region, self._subregions_to_ignore[0])
+
+        # Ignore the entire subregion if its begin and end point lies
+        # within the superregion (inclusive)
+        if (is_begin_of_subregion_inside_region and
+                is_end_of_subregion_inside_region):
+            return True, region
+        # Modify the subregion if its first section lies within
+        # the subregion
+        elif is_begin_of_subregion_inside_region:
+            return False, sublime.Region(
+                self._subregions_to_ignore[0].end() + 1, region.end())
+        # Modify the subregion if its last section lies within
+        # the subregion
+        elif is_end_of_subregion_inside_region:
+            return False, sublime.Region(region.begin(),
+                                         self._subregions_to_ignore[0].begin())
+        # Don't modify the subregion
+        else:
+            return False, region
+
+    def _is_begin_of_subregion_inside_region(self, subregion, region):
+        """
+        Returns true if subregion.begin() lies inbetween the subregion.begin()
+        and subregion.end() inclusive.
+        e.g. returns true if subregion = (5, 15) and region = (0, 10)
+        """
+        return (subregion.begin() >= region.begin() and
+                subregion.begin() <= region.end())
+
+    def _is_end_of_subregion_inside_region(self, subregion, region):
+        """
+        Returns true if subregion.end() lies inbetween the subregion.begin()
+        and subregion.end() inclusive.
+        e.g. returns true if subregion = (0, 10) and region = (5, 15)
+        """
+        return (subregion.end() >= region.begin() and
+                subregion.end() <= region.end())
