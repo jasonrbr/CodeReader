@@ -91,48 +91,48 @@ class Reader():
         # No need to translate
         return line_str
 
-    def _ignore_region(self, region):
+    def _ignore_region(self, subregion):
         # No regions should be ignored
         if not self._subregions_to_ignore:
-            return False, region
+            return False, subregion
 
         # 'Subregions to ignore' is a list sorted in ascending region
         # order. Remove subregions from the front of the list until
         # a subregion that contains region is found. If none can be
         # found, no other regions must be ignored.
-        while region.begin() > self._subregions_to_ignore[0].end():
+        while subregion.begin() > self._subregions_to_ignore[0].end():
             del self._subregions_to_ignore[0]
 
         # Check if any subregions to ignore remain
         if not self._subregions_to_ignore:
-            return False, region
+            return False, subregion
 
         is_begin_of_subregion_inside_region = \
             self._is_begin_of_subregion_inside_region(
-                region, self._subregions_to_ignore[0])
+                subregion, self._subregions_to_ignore[0])
 
         is_end_of_subregion_inside_region = \
             self._is_end_of_subregion_inside_region(
-                region, self._subregions_to_ignore[0])
+                subregion, self._subregions_to_ignore[0])
 
         # Ignore the entire subregion if its begin and end point lies
         # within the superregion (inclusive)
         if (is_begin_of_subregion_inside_region and
                 is_end_of_subregion_inside_region):
-            return True, region
+            return True, subregion
         # Modify the subregion if its first section lies within
         # the subregion
         elif is_begin_of_subregion_inside_region:
             return False, sublime.Region(
-                self._subregions_to_ignore[0].end() + 1, region.end())
+                self._subregions_to_ignore[0].end() + 1, subregion.end())
         # Modify the subregion if its last section lies within
         # the subregion
         elif is_end_of_subregion_inside_region:
-            return False, sublime.Region(region.begin(),
+            return False, sublime.Region(subregion.begin(),
                                          self._subregions_to_ignore[0].begin())
         # Don't modify the subregion
         else:
-            return False, region
+            return False, subregion
 
     def _is_begin_of_subregion_inside_region(self, subregion, region):
         """
