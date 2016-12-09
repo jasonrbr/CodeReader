@@ -84,25 +84,28 @@ class MenuNode():
     def is_global_node(self):
         return self._parent is None
 
-def get_libraries(view):
+def get_libraries(view, parent):
 # Look for libraries in view to make into scopes
-    view_rgn = sublime.Region(0, len(self.view))
+    result = []
+    view_rgn = sublime.Region(0, len(view))
     lib_pattern = '\#include (\<(\w+)\>|\"\w+\.\w+\")'
-    for rgn in self.view.split_by_newlines(view_rgn):
+    for rgn in view.split_by_newlines(view_rgn):
         # if rgn contained in any subscope regions...
         if False:
             continue
 
-        txt = self.view.substr(rgn)
+        txt = view.substr(rgn)
         m = re.match(lib_pattern, txt)
         if m:
             # grabs library name and strips off special characters
             library_name = m.group(1)
             library_name = re.sub('[\<\>\"]', '', library_name)
 
-            scopes.append(Library(self.view, library_name, rgn))
-            # NOTE this is subscope agnostic at the moment
+            item = MenuNode(view=None, scope=Library(None, library_name, rgn), parent=Node)
 
+            result.append(item)
+            # NOTE this is subscope agnostic at the moment
+    return result
 
 def get_hierarchy_tree(view, node=None):
     if not node:
@@ -129,6 +132,8 @@ def get_hierarchy_tree(view, node=None):
 
     # get libraries
     # if global scope:
+    if not node._parent:
+        get_libraries(view, node)
 
     return node
 
