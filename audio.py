@@ -33,7 +33,6 @@ def say(input):
         speed = Config.get('speed')
         # speed is done differently in windows, so need to divide by a factor
         speaker.Rate = speed / 30
-        speaker.Voice = speak.GetVoices('Name=Microsoft Mary')
         speaker.Speak(input)
 
     else:
