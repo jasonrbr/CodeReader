@@ -85,6 +85,7 @@ class MenuNode():
         return self._parent is None
 
 def get_libraries(view, parent):
+# TODO ignore #include's that are under subscopes
 # Look for libraries in view to make into scopes
     result = []
 
