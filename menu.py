@@ -90,9 +90,7 @@ def get_libraries(view, parent):
     result = []
 
     lib_rgns = view.find_all(Library.regex_pattern)
-    print("Got this many {}".format(len(lib_rgns)))
     for rgn in lib_rgns:
-        print('found a fucking library')
         result.append(Library(view, rgn))
     return result
 
