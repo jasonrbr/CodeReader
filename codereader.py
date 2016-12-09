@@ -42,7 +42,8 @@ def show_panel(options, on_done, on_hilight=None):
 class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         try:
-            # initilze configuration before the rest of run
+            # initialize configuration before the rest of run
+            print("inside run")
             Config.init()
             self._curr_node = get_hierarchy_tree(self.view)
             self._show_options_menu()
