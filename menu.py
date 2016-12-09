@@ -101,7 +101,7 @@ def get_libraries(view, parent):
             library_name = m.group(1)
             library_name = re.sub('[\<\>\"]', '', library_name)
 
-            item = MenuNode(view=None, scope=Library(None, library_name, rgn), parent=Node)
+            item = MenuNode(view=None, scope=Library(library_name, rgn), parent=Node)
 
             result.append(item)
             # NOTE this is subscope agnostic at the moment
@@ -133,8 +133,10 @@ def get_hierarchy_tree(view, node=None):
     # get libraries
     # if global scope:
     if not node._parent:
-        get_libraries(view, node)
-
+        libs = get_libraries(view, node)
+        for lib in libs:
+            node.add_child(lib)
+            
     return node
 
 
