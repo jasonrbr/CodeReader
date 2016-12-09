@@ -132,6 +132,7 @@ class GlobalScope(Scope):
 
 
 class Library(Scope):
+    regex_pattern = '#include (<\w+>|\"\w+.h\")'
     def __init__(self, view, declaration_reg):
         """
         Parameters:
@@ -140,27 +141,26 @@ class Library(Scope):
                           (ie., "#include <...>")
         """
         self._declaration_reg = declaration_reg
-        self._name = _get_name(self._declaration_reg)
+        self._name = self._get_name(self._declaration_reg, view)
 
         super().__init__(view,
                          self._name,
                          library_scope_type)
+        
+
 
     # TODO: do we need to parse out '#'?
     @property
     def declaration(self):
-        return view.substr(self._declaration_reg)
+        return self._view.substr(self._declaration_reg)
 
-    # TODO: make work for project libs (e.g. #include "lib.h")
-    @property
-    def regex_pattern():
-        return '\#include \<(\w+)\>'
-
-    def _get_name(self):
-        lib_pattern = regex_pattern()
-        txt = self.view.substr(rgn)
+    def _get_name(self, rgn, view):
+        lib_pattern = self.regex_pattern
+        txt = view.substr(rgn)
         m = re.match(lib_pattern, txt)
-        return m.group(1)
+        library_name = m.group(1)
+        library_name = re.sub('[\<\>\"]', '', library_name)
+        return library_name
 
 
 class ScopesWithDefinitions(Scope):
