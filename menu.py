@@ -84,6 +84,7 @@ class MenuNode():
     def is_global_node(self):
         return self._parent is None
 
+
 def get_libraries(view, parent):
 # TODO ignore #include's that are under subscopes
 # Look for libraries in view to make into scopes
@@ -93,6 +94,7 @@ def get_libraries(view, parent):
     for rgn in lib_rgns:
         result.append(Library(view, rgn))
     return result
+
 
 def get_hierarchy_tree(view, node=None):
     if not node:
