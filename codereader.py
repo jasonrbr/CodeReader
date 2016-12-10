@@ -139,19 +139,15 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             self._show_children_menu(self._selected_child_type)
             return
 
-        # The current node becomes the selected child node
-        # (go one level down the tree)
-
-        # TODO if library, or no options, just redisplay this menu
         child_name = self._panel_options[ind]
         this_node = self._children_node_options[child_name]
-        if isinstance(this_node.scope, Library):
-            # reloads parent's menu at the moment
-            # TODO just redisplay the same panel menu, or donothing
-            # note: panel menus automatically close after you select an option
 
-            self._show_options_menu()
+        if this_node.scope.type == library_scope_type:
+            self._show_children_menu(self._selected_child_type)
             return
+
+        # The current node becomes the selected child node
+        # (go one level down the tree)
 
         self._curr_node = self._children_node_options[child_name]
         self._show_options_menu()

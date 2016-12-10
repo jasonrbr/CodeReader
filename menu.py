@@ -121,7 +121,7 @@ def get_hierarchy_tree(view, node=None):
 
     # get libraries
     # if global scope:
-    if True: #not node._parent:
+    if not node.parent:
         libs = get_libraries(view, node)
         for lib in libs:
             node.add_child(MenuNode(view, lib, node))
