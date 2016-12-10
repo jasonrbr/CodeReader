@@ -139,4 +139,3 @@ class MenuCommand(sublime_plugin.TextCommand):
         # print(root.scope.name)
 
         # print(root.get_children())
-

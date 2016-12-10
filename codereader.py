@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-import re
+from .error import *
 from .audio import say
 from .menu import get_hierarchy_tree
 from .parse import *
@@ -43,17 +43,12 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         try:
             # initialize configuration before the rest of run
-            print("inside run")
             Config.init()
             self._curr_node = get_hierarchy_tree(self.view)
             self._show_options_menu()
-        except Exception as e:
-            sublime.error_message('Something went wrong!\n'
-                                  'Either you have code not up to standards,'
-                                  ' or something is seriously wrong.\n'
-                                  'Please check the console for details')
-            print(e)
-            print('jfksadljflkdsajfl;kdsajklfjdkl;asjfklsdjfl;ksd')
+        except MyError as e:
+            alert_error(e)
+            assert False
 
     def _show_children_menu(self, child_type):
         """

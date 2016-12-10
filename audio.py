@@ -2,6 +2,7 @@
 import sys
 import os
 from .config import *
+from .error import *
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,4 +37,4 @@ def say(input):
         speaker.Speak(input)
 
     else:
-        print('OS not supported')
+        raise MyError('OS not supported')
