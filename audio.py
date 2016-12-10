@@ -15,9 +15,24 @@ paths = [
 sys.path.extend(paths)
 
 
-# Perform text to speech on input with the corresponding modules
-# based on the operating system
+def set_ms_voice(speaker):
+    # can't get this to work for some reason :/
+    # voices = {
+    #     'David': 'Microsoft David',
+    #     'Zira': 'Microsoft Zira'
+    # }
+    # voice = 'Zira'
+    # speaker.Voice = speaker.GetVoices('Name=' + voices[voice]).Item(0)
+
+    # Hard code getting third item to get Zira
+    speaker.Voice = speaker.GetVoices().Item(3)
+
+
 def say(input):
+    '''
+    Perform text to speech on input with the corresponding modules
+    based on the operating system
+    '''
     if (sys.platform == 'darwin'):
         import os
         # Get user defined speed from config file
@@ -34,6 +49,7 @@ def say(input):
         speed = Config.get('speed')
         # speed is done differently in windows, so need to divide by a factor
         speaker.Rate = speed / 30
+        set_ms_voice(speaker)
         speaker.Speak(input)
 
     else:
