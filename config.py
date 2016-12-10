@@ -117,7 +117,6 @@ class Config:
             print("Error: speed is too fast. Cannot increase anymore.")
             return
         Config.set('speed', speed)
-        print('speed is now ', speed)
 
     @staticmethod
     def decrease_speed():
@@ -130,7 +129,6 @@ class Config:
             print("Error: speed is too slow. Cannot decrease anymore.")
             return
         Config.set('speed', speed)
-        print('speed is now ', speed)
 
 
 class ToggleLineNumbersCommand(sublime_plugin.TextCommand):

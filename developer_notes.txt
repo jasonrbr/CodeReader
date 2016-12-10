@@ -5,6 +5,5 @@ This project does not support:
 	* nice do-while loop formating
 	* closing brackets on the same line as opening brackets
 	* < and > without one single space on either side if used as operators
-	* template containers with more than one template argument
-
-To toggle comments and/or line numbers, the key binding must be run before starting CodeReader.py
+	* template containers with more than one template argument (i.e. vector<Thing> works but map <T1, T2> does not)
+	* global comments

@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-import re
+from .error import *
 from .audio import say
 from .menu import get_hierarchy_tree
 from .parse import *
@@ -41,10 +41,14 @@ def show_panel(options, on_done, on_hilight=None):
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        # initilze configuration before the rest of run
-        Config.init()
-        self._curr_node = get_hierarchy_tree(self.view)
-        self._show_options_menu()
+        try:
+            # initialize configuration before the rest of run
+            Config.init()
+            self._curr_node = get_hierarchy_tree(self.view)
+            self._show_options_menu()
+        except MyError as e:
+            alert_error(e)
+            assert False
 
     def _show_children_menu(self, child_type):
         """

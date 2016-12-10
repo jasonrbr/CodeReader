@@ -2,6 +2,7 @@ import sublime
 import re
 from .parse_symbols import parse_symbols
 from .config import *
+from .error import *
 
 global_scope_name = 'global namespace'
 func_scope_type = 'functions'
@@ -28,10 +29,16 @@ def read_definition(scope, definition, panel_options, read_line_numbers):
 
         line_str = scope._view.substr(line)
 
-        if "}" in line_str:
-            subscope_type = subscope_stack.pop()
-            panel_options.append("exiting " + subscope_type)
-            continue
+        try:
+            if "}" in line_str:
+                if not subscope_stack:
+                    raise MyError("Error: Closing bracket error")
+                subscope_type = subscope_stack.pop()
+                panel_options.append("exiting " + subscope_type)
+                continue
+        except MyError as e:
+            alert_error(e)
+            assert False
 
         if "for" in line_str:
             subscope_stack.append("for loop")
