@@ -153,13 +153,11 @@ class Library(Scope):
         super().__init__(view,
                          self._name,
                          library_scope_type)
-        
-
 
     # TODO: do we need to parse out '#'?
     @property
     def declaration(self):
-        return self._view.substr(self._declaration_reg)
+        return "library {}".format(self._name)
 
     def _get_name(self, rgn, view):
         lib_pattern = self.regex_pattern
