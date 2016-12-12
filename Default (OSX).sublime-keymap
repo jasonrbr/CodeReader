@@ -8,19 +8,19 @@
 		"command": "open_help"
     },
     {
-        "keys": ["super+shift+u", super+shift+7"],
+        "keys": ["super+shift+u", "super+shift+7"],
         "command": "toggle_line_numbers"
     },
     {
-        "keys": ["super+shift+u", super+shift+8"],
+        "keys": ["super+shift+u", "super+shift+8"],
         "command": "toggle_comments"
     },
     {
-        "keys": ["super+shift+u", super+shift+8"],
+        "keys": ["super+shift+u", "super+shift+8"],
         "command": "increase_speed"
     },
     {
-        "keys": ["super+shift+u", super+shift+9"],
+        "keys": ["super+shift+u", "super+shift+9"],
         "command": "decrease_speed"
     },
 ]
