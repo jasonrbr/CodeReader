@@ -1,7 +1,9 @@
 import sublime
 import re
-from .parse_symbols import parse_symbols
 from .config import *
+from .parse import get_sub_scopes
+from .parse_symbols import parse_symbols
+from .scope_reader import *
 from .error import *
 
 global_scope_name = 'global namespace'
@@ -14,92 +16,6 @@ scope_types = {func_scope_type, class_scope_type, library_scope_type}
 
 def is_valid_type(scope_type):
     return scope_type in scope_types
-
-
-# Read the lines in the definition for the scope in a nice way
-def read_definition(scope, definition, panel_options, read_line_numbers):
-    subscope_stack = list()
-
-    single_line_comment = False
-    multi_line_comment_found_begin = False
-    multi_line_comment_found_end = False
-
-    # for all the lines in the definition
-    for line in definition:
-
-        line_str = scope._view.substr(line)
-
-        try:
-            if "}" in line_str:
-                if not subscope_stack:
-                    raise MyError("Error: Closing bracket error")
-                subscope_type = subscope_stack.pop()
-                panel_options.append("exiting " + subscope_type)
-                continue
-        except MyError as e:
-            alert_error(e)
-            assert False
-
-        if "for" in line_str:
-            subscope_stack.append("for loop")
-        elif "while" in line_str:
-            subscope_stack.append("while loop")
-        elif "if" in line_str and "else" not in line_str:
-            subscope_stack.append("if statement")
-        elif "if" in line_str and "else" in line_str:
-            subscope_stack.append("else if statement")
-        elif "if" not in line_str and "else" in line_str:
-            subscope_stack.append("else statement")
-        # Catchall for other scopes
-        elif "{" in line_str:
-            subscope_stack.append("scope")
-
-        if line_str and not line_str.isspace():
-
-            # Is reading_comments off?
-            if not Config.get('read_comments'):
-
-                # If it's a single line comment
-                if '//' in line_str:
-                    single_line_comment = True
-                    continue
-
-                # Find start of multi line comment
-                if '/*' in line_str:
-                    multi_line_comment_found_begin = True
-                    multi_line_comment_found_end = False
-                    continue
-
-                # Found the end of the multi line comment!
-                if '*/' in line_str:
-                    multi_line_comment_found_end = True
-                    multi_line_comment_found_begin = False
-                    continue
-
-                # If there is more of the multi line comment to be found
-                if (multi_line_comment_found_begin and
-                        not multi_line_comment_found_end):
-                    continue
-
-            # Need to read comments
-            else:
-                # If it's a single line comment
-                if '//' in line_str:
-                    single_line_comment = True
-
-            parsed_string = parse_symbols(line_str)
-
-            if read_line_numbers:
-                row, col = scope._view.rowcol(line.a)
-                parsed_string = 'line ' + str(row + 1) + ', ' + parsed_string
-
-            panel_options.append(parsed_string)
-
-            # Check for single line comment
-            if single_line_comment and Config.get('read_comments'):
-                panel_options.append('end comment')
-                single_line_comment = False
-    return panel_options
 
 
 class Scope():
@@ -121,8 +37,8 @@ class Scope():
         return self._scope_type == class_scope_type
 
 
-"""TODO: make this derive from ScopesWithDefinitions, and have its
-    declaration match its definition???"""
+# TODO: make this derive from ScopesWithDefinitions, and have its
+# declaration match its definition???
 class GlobalScope(Scope):
     def __init__(self, view):
         super().__init__(view, global_scope_name)
@@ -138,8 +54,10 @@ class GlobalScope(Scope):
         return True
 
 
+# TODO: do we even need this?
 class Library(Scope):
     regex_pattern = '#include (<\w+>|\"\w+.h\")'
+
     def __init__(self, view, declaration_reg):
         """
         Parameters:
@@ -168,12 +86,13 @@ class Library(Scope):
         return library_name
 
 
-class ScopesWithDefinitions(Scope):
+class ReadableScopes(Scope):
     def __init__(self, view, name, scope_type,
-                 declaration_reg, definition_reg):
+                 declaration_reg, definition_reg,
+                 reading_state):
         self._declaration_reg = declaration_reg
         self._definition_reg = definition_reg
-
+        self._reading_state = reading_state
         super().__init__(view, name, scope_type)
 
     def __eq__(self, other):
@@ -187,15 +106,33 @@ class ScopesWithDefinitions(Scope):
     def definition_region(self):
         return self._definition_reg
 
+    def _get_panel_options(self):
+        decl_str = self.declaration
 
-class Function(ScopesWithDefinitions):
+        if self._reading_state.read_line_numbers:
+            row, col = self._view.rowcol(self._declaration_reg.begin())
+            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
+
+        panel_options = [decl_str]
+        panel_options.extend(read_region(self._view,
+                                         self._reading_state,
+                                         self.definition_region))
+        return panel_options
+
+
+class Function(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
         func_name = self._get_func_name(view, declaration_reg)
         super().__init__(view, func_name, func_scope_type,
-                         declaration_reg, definition_reg)
+                         declaration_reg, definition_reg,
+                         FunctionReadingState())
 
     def __eq__(self, other):
         return super().__eq__(other) and self.params == other.params
+
+    @property
+    def panel_options(self):
+        return self._get_panel_options()
 
     @property
     def declaration(self):
@@ -212,10 +149,6 @@ class Function(ScopesWithDefinitions):
             return decl_str
 
         return decl_str + " and takes {}".format(params)
-
-    @property
-    def panel_options(self):
-        return self._get_panel_options()
 
     @property
     def params(self):
@@ -242,70 +175,37 @@ class Function(ScopesWithDefinitions):
 
         return func_name
 
-    def _get_panel_options(self):
-        panel_options = []
 
-        # init the config file for reading
-        Config.init()
-        read_line_numbers = Config.get('read_line_numbers')
-
-        decl_str = self.declaration
-
-        if read_line_numbers:
-            row, col = self._view.rowcol(self._declaration_reg.a)
-            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
-
-        panel_options.append(decl_str)
-
-        definition = self._view.split_by_newlines(
-            sublime.Region(self._definition_reg.begin(),
-                           self._definition_reg.end()))
-
-        returned_panel_options = read_definition(self, definition=definition,
-                                                 panel_options=panel_options,
-                                                 read_line_numbers=read_line_numbers)
-
-        return returned_panel_options
-
-
-class Class(ScopesWithDefinitions):
+class Class(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
+        print("Hello World")
         class_name = view.substr(declaration_reg).split()[1]
         super().__init__(view, parse_symbols(class_name), class_scope_type,
-                         declaration_reg, definition_reg)
+                         declaration_reg, definition_reg,
+                         self._get_reading_state(view, definition_reg))
 
     def __eq__(self, other):
         return super().__eq__(other)
 
     @property
-    def declaration(self):
-        return 'class {}'.format(self._name)
-
-    @property
     def panel_options(self):
         return self._get_panel_options()
 
-    def _get_panel_options(self):
-        panel_options = []
+    @property
+    def declaration(self):
+        return 'class {}'.format(self._name)
 
-        decl_str = self.declaration
-        # init the config file for reading
-        Config.init()
-        read_line_numbers = Config.get('read_line_numbers')
+    def _get_reading_state(self, view, definition_region):
+        regions_to_ignore = self._get_regions_to_ignore(view,
+                                                        definition_region)
 
-        if read_line_numbers:
-            row, col = self._view.rowcol(self._declaration_reg.a)
-            decl_str = 'line ' + str(row + 1) + ', ' + decl_str
+        subscope_decl_regions = get_sub_scopes(view, definition_region)
+        return ClassReadingState(regions_to_ignore, subscope_decl_regions)
 
-        panel_options.append(decl_str)
+    def _get_regions_to_ignore(self, view, definition_region):
+        scopes_to_ignore = get_sub_scopes(view, definition_region)
+        regions_to_ignore = list()
+        for scope in scopes_to_ignore:
+            regions_to_ignore.append(scope.definition_region)
 
-        definition = self._view.split_by_newlines(
-            sublime.Region(self._definition_reg.begin(),
-                           self._definition_reg.end()))
-
-        # TODO: Don't read body of member function (make sub menu?)
-        returned_panel_options = read_definition(self, definition=definition,
-                                                 panel_options=panel_options,
-                                                 read_line_numbers=read_line_numbers)
-
-        return returned_panel_options
+        return regions_to_ignore
