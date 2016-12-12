@@ -21,7 +21,7 @@ class FunctionReadingState(ReadingState):
         super().__init__()
         self.subscope_strings = {
             "}": "exiting {}",
-            "for": "foor loop",
+            "for": "for loop",
             "while": "while loop",
             "if": "if statement",
             "else if": "else if statement",
