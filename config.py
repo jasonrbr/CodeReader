@@ -54,6 +54,9 @@ class Config:
         Returns the value set for the given parameter in the config file.
         Will return None if the value is unset.
         '''
+        if not Config.is_initialized:
+            Config.init()
+
         if param in Config.config:
             return Config.config[param]
         else:
@@ -63,6 +66,7 @@ class Config:
     def set(param, value):
         Config.config[param] = value
         Config._save_config()
+        print(Config.config)
 
     # loads config file into memory
     #   @param: fn: filename of the config file
@@ -70,7 +74,6 @@ class Config:
     def _load_config():
         f = None
         try:
-            print("Should be looking in: ", sublime.installed_packages_path())
             print("Loading from: ", Config.config_fn)
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
@@ -82,12 +85,14 @@ class Config:
             if f:
                 f.close()
 
-
-
     #  saves config file in memory to file
     #   @param: fn: filename of the config file
     @staticmethod
     def _save_config():
+
+        if not Config.is_initialized:
+            Config.init()
+
         f = None
         try:
             print("Saving to: ", Config.config_fn)
@@ -112,9 +117,6 @@ class Config:
 
     @staticmethod
     def increase_speed():
-        if not Config.is_initialized:
-            Config.init()
-
         speed = Config.get('speed')
         speed += 25
         if (speed > 400):
@@ -124,9 +126,7 @@ class Config:
 
     @staticmethod
     def decrease_speed():
-        if not Config.is_initialized:
-            Config.init()
-
+        print("hi benny, decreasing")
         speed = Config.get('speed')
         speed -= 25
         if (speed < 150):
