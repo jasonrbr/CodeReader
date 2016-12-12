@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import sublime
 import sublime_plugin
 
@@ -12,12 +13,14 @@ class Config:
     DEFAULT_CONFIG = {
         'read_comments': True,
         'read_line_numbers': True,
-
+        'speed': 250
     }
     config = {}
     package_dir = 'CodeReader'
-    config_fn = os.path.join(sublime.packages_path(),
-                             package_dir, '.cr_config')
+
+    cur_path = os.path.dirname(os.path.abspath(__file__))
+
+    config_fn = os.path.join(cur_path, '.cr_config')
 
     @staticmethod
     def init(fn=None, config={}):
@@ -32,19 +35,18 @@ class Config:
         # load the file from memory or default
 
         Config.is_initialized = True
-        if not fn:
-            Config.config = Config.DEFAULT_CONFIG
-            Config._save_config()
-        else:
 
-            Config.config_fn = os.path.join(sublime.packages_path(),
+        if fn:
+            Config.config_fn = os.path.join(sublime.installed_packages_path(),
                                             Config.package_dir, fn)
-            Config._load_config()
-            Config.config_fn = fn
+            # Config.config_fn = os.path.abspath(Config.config_fn)
+
+        Config._load_config()
 
         # load param config file into our config
         for k in config:
             Config.config[k] = config[k]
+        Config._save_config()
 
     @staticmethod
     def get(param):
@@ -52,6 +54,9 @@ class Config:
         Returns the value set for the given parameter in the config file.
         Will return None if the value is unset.
         '''
+        if not Config.is_initialized:
+            Config.init()
+
         if param in Config.config:
             return Config.config[param]
         else:
@@ -61,28 +66,45 @@ class Config:
     def set(param, value):
         Config.config[param] = value
         Config._save_config()
+        print(Config.config)
 
     # loads config file into memory
     #   @param: fn: filename of the config file
     @staticmethod
     def _load_config():
-        print('loading from:', Config.config_fn)
+        f = None
         try:
+            print("Loading from: ", Config.config_fn)
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
         except:
-            print("Error reading config file.")
+            e = sys.exc_info()[0]
+            print("Error reading config file ({}). Loading default.".format(e))
+            Config.config = Config.DEFAULT_CONFIG
+        finally:
+            if f:
+                f.close()
 
     #  saves config file in memory to file
     #   @param: fn: filename of the config file
     @staticmethod
     def _save_config():
-        print('saving to:', Config.config_fn)
+
+        if not Config.is_initialized:
+            Config.init()
+
+        f = None
         try:
+            print("Saving to: ", Config.config_fn)
             f = open(Config.config_fn, 'w')
             f.write(json.dumps(Config.config))
         except:
-            print("Error saving to config file. Write failed.")
+            e = sys.exc_info()[0]
+            print("Error saving to config file. Write failed.",
+                  Config.config_fn, '({})'.format(e))
+        finally:
+            if f:
+                f.close()
 
     @staticmethod
     def toggle(param):
@@ -92,6 +114,25 @@ class Config:
     @staticmethod
     def _tostring():
         return str(Config.config)
+
+    @staticmethod
+    def increase_speed():
+        speed = Config.get('speed')
+        speed += 25
+        if (speed > 400):
+            print("Error: speed is too fast. Cannot increase anymore.")
+            return
+        Config.set('speed', speed)
+
+    @staticmethod
+    def decrease_speed():
+        print("hi benny, decreasing")
+        speed = Config.get('speed')
+        speed -= 25
+        if (speed < 150):
+            print("Error: speed is too slow. Cannot decrease anymore.")
+            return
+        Config.set('speed', speed)
 
 
 class ToggleLineNumbersCommand(sublime_plugin.TextCommand):
@@ -104,4 +145,11 @@ class ToggleCommentsCommand(sublime_plugin.TextCommand):
         Config.toggle('read_comments')
 
 
-Config.init()
+class IncreaseSpeedCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        Config.increase_speed()
+
+
+class DecreaseSpeedCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        Config.decrease_speed()

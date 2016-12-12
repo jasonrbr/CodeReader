@@ -1,18 +1,26 @@
 [
 	{ 
-		"keys": ["super+shift+c+r"],
+		"keys": ["super+shift+c"],
 		"command": "code_reader"
     },
 	{
-		"keys": ["super+shift+h+m"],
+		"keys": ["super+shift+h"],
 		"command": "open_help"
     },
     {
-        "keys": ["super+shift+u+7"],
+        "keys": ["super+shift+u", "super+shift+7"],
         "command": "toggle_line_numbers"
     },
     {
-        "keys": ["super+shift+u+8"],
+        "keys": ["super+shift+u", "super+shift+8"],
         "command": "toggle_comments"
+    },
+    {
+        "keys": ["super+shift+u", "super+shift+8"],
+        "command": "increase_speed"
+    },
+    {
+        "keys": ["super+shift+u", "super+shift+9"],
+        "command": "decrease_speed"
     },
 ]

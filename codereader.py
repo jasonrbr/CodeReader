@@ -1,21 +1,22 @@
 import sublime
 import sublime_plugin
+from .error import *
 from .audio import say
-from .menu import MenuTree
+from .menu import get_hierarchy_tree
 from .parse import *
 from .scopes import *
 
 # Menu option menu strings:
 go_up_prfx = 'go up to scope, '
-read_prfx = 'reed '  # Note: reed not read for proper pronunciation
-scope_prfx = 'scope '
+read_prfx = 'read '  # Note: reed not read for proper pronunciation
+scope_prfx = 'you are in scope '
 
 # Child option menu strings:
 title_str = 'scope {}s {}'
-return_to_options_prfx = 'See all children options for '
+return_to_options_prfx = 'go back to options for '
 
 # Read option menu strings:
-quit_str = 'Quit reading'
+quit_str = 'quit reading'
 
 # Option menu Indices
 title_ind = 0
@@ -40,8 +41,14 @@ def show_panel(options, on_done, on_hilight=None):
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        self._curr_node = self._get_hierarchy_tree().root
-        self._show_options_menu()
+        try:
+            # initialize configuration before the rest of run
+            Config.init()
+            self._curr_node = get_hierarchy_tree(self.view)
+            self._show_options_menu()
+        except MyError as e:
+            alert_error(e)
+            assert False
 
     def _show_children_menu(self, child_type):
         """
@@ -59,16 +66,8 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
         # Make menu show scope's name and params
         for node in children_nodes:
-
-            # only add params if it's a function
-            if node.scope.type == func_scope_type:
-                self._panel_options.append(node.scope.name +
-                                           node.scope.params)
-                self._children_node_options[node.scope.name +
-                                            node.scope.params] = node
-            else:
-                self._panel_options.append(node.scope.name)
-                self._children_node_options[node.scope.name] = node
+            self._panel_options.append(node.scope.declaration)
+            self._children_node_options[node.scope.declaration] = node
 
         self._panel_options.append(return_to_options_prfx +
                                    self._curr_node.scope.name)
@@ -140,9 +139,16 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             self._show_children_menu(self._selected_child_type)
             return
 
+        child_name = self._panel_options[ind]
+        this_node = self._children_node_options[child_name]
+
+        if this_node.scope.type == library_scope_type:
+            self._show_children_menu(self._selected_child_type)
+            return
+
         # The current node becomes the selected child node
         # (go one level down the tree)
-        child_name = self._panel_options[ind]
+
         self._curr_node = self._children_node_options[child_name]
         self._show_options_menu()
 
@@ -210,18 +216,3 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
 
     def _get_go_up_ind(self):
         return len(self._panel_options) - 1
-
-    def _get_hierarchy_tree(self):
-        scopes = list()
-        # Convert all symbols in the view to scopes
-        for pair in self.view.symbols():
-            scope = get_scope(self.view, pair[0])
-            # TODO: handle fwd declarations
-            if scope:
-                scopes.append(scope)
-
-        tree = MenuTree(self.view)
-        for scope in scopes:
-            tree.push(scope)
-
-        return tree
