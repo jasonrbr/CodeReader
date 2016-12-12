@@ -198,9 +198,7 @@ class Class(ReadableScopes):
     def _get_reading_state(self, view, definition_region):
         regions_to_ignore = self._get_regions_to_ignore(view,
                                                         definition_region)
-
-        subscope_decl_regions = get_sub_scopes(view, definition_region)
-        return ClassReadingState(regions_to_ignore, subscope_decl_regions)
+        return ClassReadingState(regions_to_ignore)
 
     def _get_regions_to_ignore(self, view, definition_region):
         scopes_to_ignore = get_sub_scopes(view, definition_region)
