@@ -85,6 +85,17 @@ class MenuNode():
         return self._parent is None
 
 
+def get_libraries(view, parent):
+# TODO ignore #include's that are under subscopes
+# Look for libraries in view to make into scopes
+    result = []
+
+    lib_rgns = view.find_all(Library.regex_pattern)
+    for rgn in lib_rgns:
+        result.append(Library(view, rgn))
+    return result
+
+
 def get_hierarchy_tree(view, node=None):
     if not node:
         node = MenuNode(view=view,
@@ -107,6 +118,13 @@ def get_hierarchy_tree(view, node=None):
                                                        subscope,
                                                        parent=node))
         node.add_child(child_node)
+
+    # get libraries
+    # if global scope:
+    if not node.parent:
+        libs = get_libraries(view, node)
+        for lib in libs:
+            node.add_child(MenuNode(view, lib, node))
 
     return node
 
@@ -139,4 +157,3 @@ class MenuCommand(sublime_plugin.TextCommand):
         # print(root.scope.name)
 
         # print(root.get_children())
-

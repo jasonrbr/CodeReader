@@ -2,6 +2,7 @@
 import sys
 import os
 from .config import *
+from .error import *
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,8 +31,10 @@ def say(input):
         # E.g., pywin32-220.win-amd64-py3.4.exe if you are running python 3.4
         import win32com.client
         speaker = win32com.client.Dispatch("SAPI.SpVoice")
-        speaker.Rate = 5 # edit for rate of speech
+        speed = Config.get('speed')
+        # speed is done differently in windows, so need to divide by a factor
+        speaker.Rate = speed / 30
         speaker.Speak(input)
 
     else:
-        print('OS not supported')
+        raise MyError('OS not supported')

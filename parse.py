@@ -1,7 +1,10 @@
 import sublime
 import sublime_plugin
 from .scopes import *
-from .audio import say
+from .error import *
+
+global_namespace_str = 'global namespace'
+class_str = 'class'
 
 
 def get_decl_start(view, symbol_start):
@@ -27,7 +30,7 @@ def get_decl_start(view, symbol_start):
                 symbol_start += 1
                 break
             else:
-                say('Error: missing declaration')
+                raise MyError('Error: missing declaration')
                 assert False
 
         # Triggered when first whitespace character is found
@@ -55,7 +58,7 @@ def get_decl_end(view, symbol_end):
     """
     while True:
         if symbol_end == view.size() - 1:
-            say('Error: missing open bracket or semicolon')
+            raise MyError('Error: missing open bracket or semicolon')
             assert False
 
         symbol_end += 1
@@ -84,8 +87,9 @@ def get_declaration(view, symbol_reg):
     is_fwd_decl, decl_end = get_decl_end(view, symbol_reg.end())
 
     if is_fwd_decl:
-        say('Error: forward declaration for {} ignored'.format(
+        raise MyError('Error: forward declaration for {} ignored'.format(
             view.substr(symbol_reg)))
+        assert False
         return None
 
     return sublime.Region(decl_start, decl_end)
@@ -105,7 +109,7 @@ def get_def_start(view, decl_end):
     # Find point immediately after '{'
     while True:
         if def_start == view.size() - 1:
-            say("Error: missing definition")
+            raise MyError("Error: missing definition")
             assert False
 
         def_start += 1
@@ -132,7 +136,7 @@ def get_def_end(view, def_start):
     # first open bracket
     while open_bracket_count != closed_bracket_count:
         if def_end == view.size() - 1:
-            say("Error: missing closing bracket")
+            raise MyError("Error: missing closing bracket")
             assert False
 
         def_end += 1
@@ -178,7 +182,7 @@ def get_scope(view, symbol_reg):
 
     definition_reg = get_definition(view, declaration_reg)
 
-    if view.substr(declaration_reg).split()[0] == 'class':
+    if view.substr(declaration_reg).split()[0] == class_str:
         scope = Class(view, declaration_reg, definition_reg)
     else:
         scope = Function(view, declaration_reg, definition_reg)
@@ -219,40 +223,3 @@ def get_sub_scopes(view, region):
             subscopes.append(subscope)
 
     return subscopes
-
-
-class ParseCommand(sublime_plugin.TextCommand):
-    def print_subscopes(self, scope, region=None):
-        if scope.name != 'global namespace':
-            region = sublime.Region(scope.definition_region.begin(),
-                                    scope.definition_region.end())
-
-        subscopes = get_sub_scopes(self.view, region)
-
-        if not subscopes:
-            print("{} has no children".format(scope.name))
-            return
-
-        print("{}'s children:".format(scope.name))
-        for subscope in subscopes:
-            print(subscope.name)
-
-        for subscope in subscopes:
-            self.print_subscopes(scope=subscope)
-
-    def run(self, edit):
-        classA_reg = sublime.Region(6, 7)
-        classA = get_scope(self.view, classA_reg)
-
-        # print(self.view.substr(classA.definition_region))
-
-        subscopes = get_sub_scopes(self.view, classA.definition_region)
-
-        for scope in subscopes:
-            print("{}:".format(scope.name))
-            print(self.view.substr(scope.definition_region))
-            print("")
-
-        # global_namespace_reg = sublime.Region(0, self.view.size())
-        # global_scope = Scope(view=self.view, name='global namespace')
-        # self.print_subscopes(scope=global_scope, region=global_namespace_reg)

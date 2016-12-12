@@ -1,5 +1,6 @@
 import sublime
 import sublime_plugin
+from .error import *
 from .audio import say
 from .menu import get_hierarchy_tree
 from .parse import *
@@ -40,10 +41,14 @@ def show_panel(options, on_done, on_hilight=None):
 
 class CodeReaderCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        # initilze configuration before the rest of run
-        Config.init()
-        self._curr_node = get_hierarchy_tree(self.view)
-        self._show_options_menu()
+        try:
+            # initialize configuration before the rest of run
+            Config.init()
+            self._curr_node = get_hierarchy_tree(self.view)
+            self._show_options_menu()
+        except MyError as e:
+            alert_error(e)
+            assert False
 
     def _show_children_menu(self, child_type):
         """
@@ -134,9 +139,16 @@ class CodeReaderCommand(sublime_plugin.TextCommand):
             self._show_children_menu(self._selected_child_type)
             return
 
+        child_name = self._panel_options[ind]
+        this_node = self._children_node_options[child_name]
+
+        if this_node.scope.type == library_scope_type:
+            self._show_children_menu(self._selected_child_type)
+            return
+
         # The current node becomes the selected child node
         # (go one level down the tree)
-        child_name = self._panel_options[ind]
+
         self._curr_node = self._children_node_options[child_name]
         self._show_options_menu()
 

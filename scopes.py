@@ -4,6 +4,7 @@ from .config import *
 from .parse import get_sub_scopes
 from .parse_symbols import parse_symbols
 from .scope_reader import Reader
+from .error import *
 
 global_scope_name = 'global namespace'
 func_scope_type = 'functions'
@@ -58,6 +59,8 @@ class GlobalScope(Scope):
 
 # TODO: do we even need this?
 class Library(Scope):
+    regex_pattern = '#include (<\w+>|\"\w+.h\")'
+
     def __init__(self, view, declaration_reg):
         """
         Parameters:
@@ -66,6 +69,7 @@ class Library(Scope):
                           (ie., "#include <...>")
         """
         self._declaration_reg = declaration_reg
+        self._name = self._get_name(self._declaration_reg, view)
 
         super().__init__(view,
                          self._name,
@@ -74,18 +78,15 @@ class Library(Scope):
     # TODO: do we need to parse out '#'?
     @property
     def declaration(self):
-        return self._view.substr(self._declaration_reg)
+        return "library {}".format(self._name)
 
-    # TODO: make work for project libs (e.g. #include "lib.h")
-    @property
-    def regex_pattern():
-        return '\#include \<(\w+)\>'
-
-    def _get_name(self):
+    def _get_name(self, rgn, view):
         lib_pattern = self.regex_pattern
-        txt = self.view.substr(self._declaration_reg)
+        txt = view.substr(rgn)
         m = re.match(lib_pattern, txt)
-        return m.group(1)
+        library_name = m.group(1)
+        library_name = re.sub('[\<\>\"]', '', library_name)
+        return library_name
 
 
 class ReadableScopes(Scope):
