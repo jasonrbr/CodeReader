@@ -32,10 +32,9 @@ class FunctionReadingState(ReadingState):
 
 
 class ClassReadingState(ReadingState):
-    def __init__(self, regions_to_ignore, subscope_decl_regions):
+    def __init__(self, regions_to_ignore):
         super().__init__()
         self.subregions_to_ignore = regions_to_ignore
-        self.subscope_decl_regions = subscope_decl_regions
 
 
 def _handle_comment(view, reading_state, line_str):
