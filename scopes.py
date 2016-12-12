@@ -178,7 +178,6 @@ class Function(ReadableScopes):
 
 class Class(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
-        print("Hello World")
         class_name = view.substr(declaration_reg).split()[1]
         super().__init__(view, parse_symbols(class_name), class_scope_type,
                          declaration_reg, definition_reg,

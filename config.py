@@ -74,7 +74,7 @@ class Config:
     def _load_config():
         f = None
         try:
-            print("Loading from: ", Config.config_fn)
+            # print("Loading from: ", Config.config_fn)
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
         except:
@@ -95,7 +95,7 @@ class Config:
 
         f = None
         try:
-            print("Saving to: ", Config.config_fn)
+            # print("Saving to: ", Config.config_fn)
             f = open(Config.config_fn, 'w')
             f.write(json.dumps(Config.config))
         except:
