@@ -3,7 +3,7 @@ import re
 from .config import *
 from .parse import get_sub_scopes
 from .parse_symbols import parse_symbols
-from .scope_reader import Reader
+from .scope_reader import *
 from .error import *
 
 global_scope_name = 'global namespace'
@@ -12,9 +12,6 @@ class_scope_type = 'classes'
 library_scope_type = 'library'
 
 scope_types = {func_scope_type, class_scope_type, library_scope_type}
-
-# Used to grab a scope's panel options
-scope_reader = Reader()
 
 
 def is_valid_type(scope_type):
@@ -91,10 +88,11 @@ class Library(Scope):
 
 class ReadableScopes(Scope):
     def __init__(self, view, name, scope_type,
-                 declaration_reg, definition_reg):
+                 declaration_reg, definition_reg,
+                 reading_state):
         self._declaration_reg = declaration_reg
         self._definition_reg = definition_reg
-
+        self._reading_state = reading_state
         super().__init__(view, name, scope_type)
 
     def __eq__(self, other):
@@ -108,20 +106,17 @@ class ReadableScopes(Scope):
     def definition_region(self):
         return self._definition_reg
 
-    def _get_panel_options(self, subregions_to_ignore=None):
-        Config.init()
-        read_line_numbers = Config.get('read_line_numbers')
-
+    def _get_panel_options(self):
         decl_str = self.declaration
 
-        if read_line_numbers:
+        if self._reading_state.read_line_numbers:
             row, col = self._view.rowcol(self._declaration_reg.begin())
             decl_str = 'line ' + str(row + 1) + ', ' + decl_str
 
         panel_options = [decl_str]
-        panel_options.extend(scope_reader.read(self._view,
-                                               self._definition_reg,
-                                               subregions_to_ignore))
+        panel_options.extend(read_region(self._view,
+                                         self._reading_state,
+                                         self.definition_region))
         return panel_options
 
 
@@ -129,7 +124,8 @@ class Function(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
         func_name = self._get_func_name(view, declaration_reg)
         super().__init__(view, func_name, func_scope_type,
-                         declaration_reg, definition_reg)
+                         declaration_reg, definition_reg,
+                         FunctionReadingState())
 
     def __eq__(self, other):
         return super().__eq__(other) and self.params == other.params
@@ -182,25 +178,32 @@ class Function(ReadableScopes):
 
 class Class(ReadableScopes):
     def __init__(self, view, declaration_reg, definition_reg):
+        print("Hello World")
         class_name = view.substr(declaration_reg).split()[1]
         super().__init__(view, parse_symbols(class_name), class_scope_type,
-                         declaration_reg, definition_reg)
-        self._regions_to_ignore = self._get_regions_to_ignore()
+                         declaration_reg, definition_reg,
+                         self._get_reading_state(view, definition_reg))
 
     def __eq__(self, other):
         return super().__eq__(other)
 
     @property
     def panel_options(self):
-        return self._get_panel_options(self._regions_to_ignore)
+        return self._get_panel_options()
 
     @property
     def declaration(self):
         return 'class {}'.format(self._name)
 
-    def _get_regions_to_ignore(self):
-        scopes_to_ignore = get_sub_scopes(self._view,
-                                          self._definition_reg)
+    def _get_reading_state(self, view, definition_region):
+        regions_to_ignore = self._get_regions_to_ignore(view,
+                                                        definition_region)
+
+        subscope_decl_regions = get_sub_scopes(view, definition_region)
+        return ClassReadingState(regions_to_ignore, subscope_decl_regions)
+
+    def _get_regions_to_ignore(self, view, definition_region):
+        scopes_to_ignore = get_sub_scopes(view, definition_region)
         regions_to_ignore = list()
         for scope in scopes_to_ignore:
             regions_to_ignore.append(scope.definition_region)
