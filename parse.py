@@ -223,29 +223,3 @@ def get_sub_scopes(view, region):
             subscopes.append(subscope)
 
     return subscopes
-
-
-class ParseCommand(sublime_plugin.TextCommand):
-    def print_subscopes(self, scope, region=None):
-        if scope.name != global_namespace_str:
-            region = sublime.Region(scope.definition_region.begin(),
-                                    scope.definition_region.end())
-
-        subscopes = get_sub_scopes(self.view, region)
-
-        if not subscopes:
-            raise MyError("{} has no children".format(scope.name))
-            assert False
-            return
-
-        print("{}'s children:".format(scope.name))
-        for subscope in subscopes:
-            print(subscope.name)
-
-        for subscope in subscopes:
-            self.print_subscopes(scope=subscope)
-
-    def run(self, edit):
-        global_namespace_reg = sublime.Region(0, self.view.size())
-        global_scope = Scope(view=self.view, name=global_namespace_str)
-        self.print_subscopes(scope=global_scope, region=global_namespace_reg)
