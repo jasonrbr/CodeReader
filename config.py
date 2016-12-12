@@ -66,7 +66,7 @@ class Config:
     def set(param, value):
         Config.config[param] = value
         Config._save_config()
-        print(Config.config)
+        # print(Config.config)
 
     # loads config file into memory
     #   @param: fn: filename of the config file
@@ -126,7 +126,6 @@ class Config:
 
     @staticmethod
     def decrease_speed():
-        print("hi benny, decreasing")
         speed = Config.get('speed')
         speed -= 25
         if (speed < 150):
