@@ -8,11 +8,11 @@
 		"command": "open_help"
     },
 	{
-		"keys": ["ctrl+shift+u+6"],
+		"keys": ["ctrl+shift+u", "ctrl+shift+6"],
 		"command": "toggle_line_numbers"
     },
     {
-        "keys": ["ctrl+shift+u+7"],
+        "keys": ["ctrl+shift+u", "ctrl+shift+7"],
         "command": "toggle_comments"
     },
     {
