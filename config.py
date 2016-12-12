@@ -17,9 +17,10 @@ class Config:
     }
     config = {}
     package_dir = 'CodeReader'
-    config_fn = os.path.join(sublime.packages_path(),
-                             package_dir, '.cr_config')
-    config_fn = os.path.abspath(config_fn)
+
+    cur_path = os.path.dirname(os.path.abspath(__file__))
+
+    config_fn = os.path.join(cur_path, '.cr_config')
 
     @staticmethod
     def init(fn=None, config={}):
@@ -36,9 +37,9 @@ class Config:
         Config.is_initialized = True
 
         if fn:
-            Config.config_fn = os.path.join(sublime.packages_path(),
+            Config.config_fn = os.path.join(sublime.installed_packages_path(),
                                             Config.package_dir, fn)
-            Config.config_fn = os.path.abspath(Config.config_fn)
+            # Config.config_fn = os.path.abspath(Config.config_fn)
 
         Config._load_config()
 
@@ -69,6 +70,8 @@ class Config:
     def _load_config():
         f = None
         try:
+            print("Should be looking in: ", sublime.installed_packages_path())
+            print("Loading from: ", Config.config_fn)
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
         except:
@@ -87,6 +90,7 @@ class Config:
     def _save_config():
         f = None
         try:
+            print("Saving to: ", Config.config_fn)
             f = open(Config.config_fn, 'w')
             f.write(json.dumps(Config.config))
         except:
