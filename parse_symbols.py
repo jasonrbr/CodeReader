@@ -8,7 +8,7 @@ symbol_list = {
     r'-=': ' minus equals ', r'->': ' arrow ',
     r'*=': ' times equals ', r'/=': ' divide equals ',
     r'<<': ',', r'>>': ',', r'--': ' minus minus ', r';': ',',
-    r'<=': ' less than or equal to ',
+    r'<=': ' less than or equal to ', r'nullptr': 'null pointer',
     r'//': ',', r'/*': ',', r'*/': ',',
     r'>=': ' greater than or equal to ',
     r'*': ' star ', r'&': ' ampersand ', r'(': ' ', r')': ' ',
