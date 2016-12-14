@@ -70,7 +70,7 @@ def _handle_subscopes(reading_state, line_str):
     for key, val in reading_state.subscope_strings.items():
         if key in line_str:
             reading_state.subscope_stack.append(key)
-            return True, val
+            return True, line_str
 
     # Not a subscope
     return False, line_str
