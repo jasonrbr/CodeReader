@@ -1,6 +1,4 @@
-import sublime
 import sublime_plugin
-from collections import deque
 from .scopes import *
 from .parse import get_sub_scopes
 
