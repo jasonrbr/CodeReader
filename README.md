@@ -14,6 +14,6 @@ Windows: c:\users\<username>\AppData\Roaming\Sublime Text 3\Packages\
 
 Mac: /Users/{username}/Library/Application Support/Sublime Text 3/Packages/
 
-For the beta release, we have implemented a more comprehensive reading and navigation of functions/classes. We have also fully integrated our audio capabilities and parsing of classes and functions. Additionally, we have added a help menu along with key bindings to start the plugin. To run this plugin, open a _.cpp_ file and use the key binding _control+shift+c+r_ on Windows or _command+shift+c+r_ on Mac. This menu will present available functions and classes to navigate to and read in the global namespace. Select any child option in the menu to see more scopes. It supports "going up" a hierarchy level as well.
+The current state of this plugin is that it reads classes, functions, and included libraries. It offers customizable audio speeds and toggable readings of line numbers or comments. See the help menu for more details about these key bindings. This plugin will parse these scopes and present them in a sublime menu to be read audibly. Use the arrow keys or the mouse to navigate through this menu.
 
 See developer_notes.txt for a list of C++ constructs this plugin does not support.
