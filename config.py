@@ -66,7 +66,7 @@ class Config:
     def set(param, value):
         Config.config[param] = value
         Config._save_config()
-        print(Config.config)
+        # print(Config.config)
 
     # loads config file into memory
     #   @param: fn: filename of the config file
@@ -74,7 +74,7 @@ class Config:
     def _load_config():
         f = None
         try:
-            print("Loading from: ", Config.config_fn)
+            # print("Loading from: ", Config.config_fn)
             f = open(Config.config_fn, 'r')
             Config.config = json.loads(f.read())
         except:
@@ -95,7 +95,7 @@ class Config:
 
         f = None
         try:
-            print("Saving to: ", Config.config_fn)
+            # print("Saving to: ", Config.config_fn)
             f = open(Config.config_fn, 'w')
             f.write(json.dumps(Config.config))
         except:
@@ -126,7 +126,6 @@ class Config:
 
     @staticmethod
     def decrease_speed():
-        print("hi benny, decreasing")
         speed = Config.get('speed')
         speed -= 25
         if (speed < 150):
